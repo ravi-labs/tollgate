@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Decision",
+  "type": "OBJECT",
+  "properties": {
+    "decision": { "enum": ["ALLOW", "ASK", "DENY"] },
+    "reason": { "type": "string" },
+    "policy_id": { "type": "string" },
+    "metadata": { "type": "object" }
+  },
+  "required": ["decision", "reason"]
+}

@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.ruff_cache/
+dist/
+build/
+*.egg-info/
+examples/mock_tickets/audit.jsonl
+examples/mock_tickets/tickets.json.bak

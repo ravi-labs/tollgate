@@ -1,0 +1,24 @@
+rules:
+  - id: deny_vip_deletion
+    tool: ticket_system
+    action: close_ticket
+    decision: DENY
+    reason: "Closing VIP tickets is strictly forbidden for AI agents."
+    when:
+      is_vip: true
+
+  - id: ask_stale_ticket_closure
+    tool: ticket_system
+    action: close_ticket
+    decision: ASK
+    reason: "Closing stale tickets requires human verification."
+    when:
+      ticket_age_days:
+        ">=": 90
+
+  - id: allow_list_stale
+    tool: ticket_system
+    action: list_stale_tickets
+    effect: read
+    decision: ALLOW
+    reason: "Reading stale ticket lists is always allowed."

@@ -1,0 +1,122 @@
+[
+  {
+    "id": "T-1",
+    "age_days": 100,
+    "status": "CLOSED",
+    "is_vip": false
+  },
+  {
+    "id": "T-2",
+    "age_days": 120,
+    "status": "OPEN",
+    "is_vip": true
+  },
+  {
+    "id": "T-3",
+    "age_days": 45,
+    "status": "OPEN",
+    "is_vip": false
+  },
+  {
+    "id": "T-4",
+    "age_days": 200,
+    "status": "CLOSED",
+    "is_vip": false
+  },
+  {
+    "id": "T-5",
+    "age_days": 10,
+    "status": "OPEN",
+    "is_vip": false
+  },
+  {
+    "id": "T-6",
+    "age_days": 95,
+    "status": "CLOSED",
+    "is_vip": false
+  },
+  {
+    "id": "T-7",
+    "age_days": 30,
+    "status": "OPEN",
+    "is_vip": true
+  },
+  {
+    "id": "T-8",
+    "age_days": 150,
+    "status": "OPEN",
+    "is_vip": false
+  },
+  {
+    "id": "T-9",
+    "age_days": 5,
+    "status": "OPEN",
+    "is_vip": false
+  },
+  {
+    "id": "T-10",
+    "age_days": 300,
+    "status": "OPEN",
+    "is_vip": true
+  },
+  {
+    "id": "T-11",
+    "age_days": 40,
+    "status": "OPEN",
+    "is_vip": false
+  },
+  {
+    "id": "T-12",
+    "age_days": 110,
+    "status": "CLOSED",
+    "is_vip": false
+  },
+  {
+    "id": "T-13",
+    "age_days": 60,
+    "status": "OPEN",
+    "is_vip": false
+  },
+  {
+    "id": "T-14",
+    "age_days": 250,
+    "status": "CLOSED",
+    "is_vip": false
+  },
+  {
+    "id": "T-15",
+    "age_days": 15,
+    "status": "OPEN",
+    "is_vip": false
+  },
+  {
+    "id": "T-16",
+    "age_days": 105,
+    "status": "CLOSED",
+    "is_vip": false
+  },
+  {
+    "id": "T-17",
+    "age_days": 80,
+    "status": "OPEN",
+    "is_vip": false
+  },
+  {
+    "id": "T-18",
+    "age_days": 130,
+    "status": "OPEN",
+    "is_vip": false
+  },
+  {
+    "id": "T-19",
+    "age_days": 20,
+    "status": "OPEN",
+    "is_vip": true
+  },
+  {
+    "id": "T-20",
+    "age_days": 180,
+    "status": "CLOSED",
+    "is_vip": false
+  }
+]
