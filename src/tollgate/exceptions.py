@@ -26,4 +26,3 @@ class TollgateDeferred(TollgateError):  # noqa: N818
     def __init__(self, approval_id: str):
         self.approval_id = approval_id
         super().__init__(f"Tool call deferred. Approval ID: {approval_id}")
-

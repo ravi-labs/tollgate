@@ -77,7 +77,7 @@ class ControlTower:
             if outcome == ApprovalOutcome.DEFERRED:
                 # We don't have an approval_id here in the basic protocol,
                 # but if the approver returns DEFERRED, we raise it.
-                # In a more advanced implementation, the approver would 
+                # In a more advanced implementation, the approver would
                 # provide the ID.
                 raise TollgateDeferred("pending")
 

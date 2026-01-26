@@ -1,13 +1,19 @@
 from .approvals import (
     ApprovalOutcome,
     ApprovalStore,
+    Approver,
     AsyncQueueApprover,
     CliApprover,
     InMemoryApprovalStore,
     compute_request_hash,
 )
 from .audit import AuditSink, JsonlAuditSink
-from .exceptions import TollgateApprovalDenied, TollgateDenied, TollgateError
+from .exceptions import (
+    TollgateApprovalDenied,
+    TollgateDeferred,
+    TollgateDenied,
+    TollgateError,
+)
 from .helpers import guard, wrap_tool
 from .policy import PolicyEvaluator, YamlPolicyEvaluator
 from .registry import ToolRegistry
@@ -39,6 +45,7 @@ __all__ = [
     "Outcome",
     "ApprovalOutcome",
     "ApprovalStore",
+    "Approver",
     "InMemoryApprovalStore",
     "AsyncQueueApprover",
     "CliApprover",
@@ -51,6 +58,7 @@ __all__ = [
     "TollgateError",
     "TollgateDenied",
     "TollgateApprovalDenied",
+    "TollgateDeferred",
     "wrap_tool",
     "guard",
 ]

@@ -56,34 +56,36 @@ class LangChainAdapter:
         )
 
 
+class GuardedLangChainTool:
+    """A wrapper for LangChain tools that enforces Tollgate gating."""
+
+    def __init__(self, tool: Any, interceptor: TollgateInterceptor):
+        self.tool = tool
+        self.interceptor = interceptor
+        self.name = tool.name
+        self.description = tool.description
+
+    async def ainvoke(self, tool_input, agent_ctx=None, intent=None, **kwargs):
+        if agent_ctx is None or intent is None:
+            return await self.tool.ainvoke(tool_input, **kwargs)
+
+        return await self.interceptor.intercept_async(
+            agent_ctx, intent, (self.tool, tool_input, kwargs)
+        )
+
+    def invoke(self, tool_input, agent_ctx=None, intent=None, **kwargs):
+        if agent_ctx is None or intent is None:
+            return self.tool.invoke(tool_input, **kwargs)
+
+        return self.interceptor.intercept(
+            agent_ctx, intent, (self.tool, tool_input, kwargs)
+        )
+
+
 def guard_tools(
     tools: list[Any], tower: ControlTower, registry: ToolRegistry
 ) -> list[Any]:
     """Wrap a list of LangChain tools with Tollgate."""
     adapter = LangChainAdapter(registry)
     interceptor = TollgateInterceptor(tower, adapter)
-
-    class GuardedTool:
-        def __init__(self, tool):
-            self.tool = tool
-            self.name = tool.name
-            self.description = tool.description
-
-        async def ainvoke(self, tool_input, agent_ctx=None, intent=None, **kwargs):
-            if agent_ctx is None or intent is None:
-                return await self.tool.ainvoke(tool_input, **kwargs)
-
-            # Pass extra kwargs (like metadata) to the interceptor
-            return await interceptor.intercept_async(
-                agent_ctx, intent, (self.tool, tool_input, kwargs)
-            )
-
-        def invoke(self, tool_input, agent_ctx=None, intent=None, **kwargs):
-            if agent_ctx is None or intent is None:
-                return self.tool.invoke(tool_input, **kwargs)
-
-            return interceptor.intercept(
-                agent_ctx, intent, (self.tool, tool_input, kwargs)
-            )
-
-    return [GuardedTool(t) for t in tools]
+    return [GuardedLangChainTool(t, interceptor) for t in tools]

@@ -20,7 +20,7 @@
   {
     "id": "T-4",
     "age_days": 200,
-    "status": "OPEN",
+    "status": "CLOSED",
     "is_vip": false
   }
 ]

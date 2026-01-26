@@ -90,6 +90,10 @@ class InMemoryApprovalStore(ApprovalStore):
         if not event:
             return ApprovalOutcome.TIMEOUT
 
+        req = self._requests.get(approval_id)
+        if req and req["expiry"] < time.time():
+            return ApprovalOutcome.TIMEOUT
+
         try:
             await asyncio.wait_for(event.wait(), timeout=timeout)
             return self._requests[approval_id]["outcome"]

@@ -8,6 +8,7 @@ class MockLCTool:
         self.name = name
         self.description = "desc"
 
+
 def test_langchain_adapter_normalization(tmp_path):
     manifest = tmp_path / "manifest.yaml"
     manifest.write_text("""
@@ -18,16 +19,15 @@ tools:
 """)
     registry = ToolRegistry(manifest)
     adapter = LangChainAdapter(registry)
-    
+
     tool = MockLCTool("my_tool")
     tool_input = {"path": "/etc/passwd"}
-    
+
     normalized = adapter.normalize((tool, tool_input))
-    
+
     assert normalized.request.tool == "langchain"
     assert normalized.request.action == "my_tool"
     assert normalized.request.effect == Effect.DELETE
     assert normalized.request.resource_type == "file"
     assert normalized.request.params == tool_input
     assert normalized.request.manifest_version is not None
-
