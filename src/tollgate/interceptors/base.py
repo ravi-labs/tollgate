@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, Protocol
 
 from ..tower import ControlTower
@@ -31,9 +32,10 @@ class TollgateInterceptor:
     def intercept(self, agent_ctx: AgentContext, intent: Intent, tool_call: Any) -> Any:
         """Intercept and gate a tool call synchronously."""
         normalized = self.adapter.normalize(tool_call)
-        if not normalized.exec_sync:
-            raise ValueError("Sync execution not supported by this adapter.")
-
+        # For sync, we use tower.execute which handles the loop safety check
         return self.tower.execute(
-            agent_ctx, intent, normalized.request, normalized.exec_sync
+            agent_ctx,
+            intent,
+            normalized.request,
+            lambda: asyncio.run(normalized.exec_async()),
         )

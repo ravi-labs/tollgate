@@ -6,7 +6,7 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Protocol
 
-from .types import AgentContext, ApprovalOutcome, Intent, ToolRequest
+from .types import AgentContext, ApprovalOutcome, Effect, Intent, ToolRequest
 
 
 class ApprovalStore(ABC):
@@ -32,12 +32,13 @@ class ApprovalStore(ABC):
         outcome: ApprovalOutcome,
         decided_by: str,
         decided_at: float,
+        request_hash: str,
     ) -> None:
         """Record a decision for an approval request."""
         pass
 
     @abstractmethod
-    async def get_request(self, approval_id: str) -> Any | None:
+    async def get_request(self, approval_id: str) -> dict[str, Any] | None:
         """Load an approval request by ID."""
         pass
 
@@ -50,7 +51,7 @@ class ApprovalStore(ABC):
 
 
 class InMemoryApprovalStore(ApprovalStore):
-    """In-memory approval store for testing and simple use cases."""
+    """In-memory approval store with replay protection and expiry."""
 
     def __init__(self):
         self._requests: dict[str, dict[str, Any]] = {}
@@ -73,9 +74,17 @@ class InMemoryApprovalStore(ApprovalStore):
         self._events[approval_id] = asyncio.Event()
         return approval_id
 
-    async def set_decision(self, approval_id, outcome, decided_by, decided_at):
+    async def set_decision(
+        self, approval_id, outcome, decided_by, decided_at, request_hash
+    ):
         if approval_id in self._requests:
             req = self._requests[approval_id]
+            # Replay protection: hash must match
+            if req["request_hash"] != request_hash:
+                raise ValueError(
+                    "Request hash mismatch. Approval bound to a different request."
+                )
+
             req["outcome"] = outcome
             req["decided_by"] = decided_by
             req["decided_at"] = decided_at
@@ -143,8 +152,25 @@ class AsyncQueueApprover:
         return outcome
 
 
+class AutoApprover:
+    """Non-interactive approver for tests and examples."""
+
+    async def request_approval_async(
+        self,
+        _agent_ctx: AgentContext,
+        _intent: Intent,
+        tool_request: ToolRequest,
+        _request_hash: str,
+        _reason: str,
+    ) -> ApprovalOutcome:
+        # Decision: approve ASK only when tool_request.effect == READ
+        if tool_request.effect == Effect.READ:
+            return ApprovalOutcome.APPROVED
+        return ApprovalOutcome.DENIED
+
+
 class CliApprover:
-    """Async-wrapped CLI approver."""
+    """Async-wrapped CLI approver for development."""
 
     def __init__(self, show_emojis: bool = True):
         self.show_emojis = show_emojis
@@ -182,7 +208,6 @@ def compute_request_hash(
 ) -> str:
     """Compute a deterministic hash for a tool request."""
 
-    # Canonicalize params and metadata
     def canonicalize(d: dict[str, Any]) -> str:
         return json.dumps(d, sort_keys=True)
 

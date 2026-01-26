@@ -1,0 +1,9 @@
+version: "1.0.0"
+tools:
+  "strands:get_weather":
+    effect: "read"
+    resource_type: "weather"
+  "strands:set_temp":
+    effect: "write"
+    resource_type: "device"
+

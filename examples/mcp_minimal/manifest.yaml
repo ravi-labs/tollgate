@@ -1,0 +1,8 @@
+version: "1.0.0"
+tools:
+  "mcp:file_server.read_file":
+    effect: "read"
+    resource_type: "file"
+  "mcp:file_server.write_file":
+    effect: "write"
+    resource_type: "file"

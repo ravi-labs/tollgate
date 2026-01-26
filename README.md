@@ -2,7 +2,7 @@
 
 Runtime enforcement layer for AI agent tool calls using **Identity + Intent + Policy**.
 
-`tollgate` provides a deterministic safety boundary for AI agents. It ensures every tool call is validated against a policy before execution, with support for async human-in-the-loop approvals, framework interception (MCP, LangChain, OpenAI), and structured audit logging.
+`tollgate` provides a deterministic safety boundary for AI agents. It ensures every tool call is validated against a policy before execution, with support for async human-in-the-loop approvals, framework interception (MCP, Strands, LangChain, OpenAI), and structured audit logging.
 
 ```mermaid
 graph TD
@@ -20,74 +20,51 @@ graph TD
 ## ✨ v1 Core Principles
 
 1. **Interception-First**: Enforcement happens at the tool execution boundary via adapters.
-2. **Safe Defaults**: Any unknown tool effect or resource defaults to `DENY` or `ASK`.
+2. **Safe Defaults**: Any unknown tool effect or resource defaults to **DENY**.
 3. **Trust Model**: Tool metadata is trusted only if it comes from a developer-controlled **Tool Registry**.
-4. **Approval Integrity**: Approvals are cryptographically bound to a request hash and correlation ID.
-5. **Async-First**: Native support for asynchronous agent loops and approval flows.
-6. **Audit as Source of Truth**: Every decision and outcome is recorded with full integrity context.
+4. **Approval Integrity**: Approvals are bound to a request hash and correlation ID with replay protection.
+5. **Async-First**: Native support for asynchronous agent loops and non-blocking approvals.
+6. **Audit Integrity**: Every decision, approval, and outcome is recorded with full cryptographic context.
 
-## 🚀 60-Second Quickstart
+## 🚀 v1 Integrations
 
-### 1. Define a Tool Registry (`manifest.yaml`)
-```yaml
-version: "1.0.0"
-tools:
-  "langchain:delete_user":
-    effect: "delete"
-    resource_type: "user"
-```
-
-### 2. Define a Policy (`policy.yaml`)
-```yaml
-rules:
-  - id: ask_delete_user
-    tool: langchain
-    action: delete_user
-    decision: ASK
-    reason: "User deletions require human confirmation."
-```
-
-### 3. Integrate with LangChain
+### MCP (Model Context Protocol)
+Wrap an MCP client to gate all tool calls:
 ```python
-from tollgate import ControlTower, ToolRegistry, YamlPolicyEvaluator, CliApprover, JsonlAuditSink
-from tollgate.interceptors.langchain import guard_tools
+from tollgate import ControlTower, ToolRegistry
+from tollgate.integrations.mcp import TollgateMCPClient
 
-# Setup the tower
 registry = ToolRegistry("manifest.yaml")
-tower = ControlTower(
-    policy=YamlPolicyEvaluator("policy.yaml"),
-    approver=CliApprover(),
-    audit=JsonlAuditSink("audit.jsonl")
-)
+tower = ControlTower(...)
+client = TollgateMCPClient(base_client, server_name="my_server", tower=tower, registry=registry)
 
-# Intercept your tools
-guarded_tools = guard_tools(my_langchain_tools, tower, registry)
-
-# Inside your agent loop, use guarded_tools just like normal tools.
-# Pass agent_ctx and intent to ainvoke() for full gating.
-await guarded_tools[0].ainvoke(input_data, agent_ctx=ctx, intent=intent)
+# Calls are now gated!
+await client.call_tool("read_data", {"id": 1}, agent_ctx=ctx, intent=intent)
 ```
 
-## 🛠 Supported Frameworks
+### Strands Agents
+Gate Strands tools with minimal friction:
+```python
+from tollgate.integrations.strands import guard_tools
 
-- **LangChain**: via `guard_tools` interceptor.
-- **OpenAI Tools**: via `OpenAIToolRunner`.
-- **MCP**: coming soon.
+guarded = guard_tools(my_strands_tools, tower, registry)
 
-## 📂 Example: Mock Tickets
-A full demo is available in `examples/mock_tickets/`. It simulates an agent attempting to close tickets using a Tool Registry and Async approvals.
-
-```bash
-# Run Demo
-python examples/mock_tickets/demo.py
+# Use guarded tools in your agent
+await guarded[0]("input", agent_ctx=ctx, intent=intent)
 ```
 
 ## 📜 Development
 
 ```bash
+# Install
 make install
+
+# Run Tests
 make test
-make lint
+
+# Run Examples (non-interactive)
+python examples/mcp_minimal/demo.py
+python examples/strands_minimal/demo.py
 ```
 
 ## ⚖️ License

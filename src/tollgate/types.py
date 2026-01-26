@@ -104,6 +104,8 @@ class AuditEvent:
     outcome: Outcome
     approval_id: str | None = None
     result_summary: str | None = None
+    policy_version: str | None = None
+    manifest_version: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -117,4 +119,6 @@ class AuditEvent:
             "outcome": self.outcome.value,
             "approval_id": self.approval_id,
             "result_summary": self.result_summary,
+            "policy_version": self.policy_version,
+            "manifest_version": self.manifest_version,
         }

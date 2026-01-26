@@ -1,0 +1,8 @@
+
+rules:
+  - id: allow_read
+    effect: read
+    decision: ALLOW
+  - id: ask_write
+    effect: write
+    decision: ASK

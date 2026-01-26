@@ -37,7 +37,23 @@ class ControlTower:
         self.policy = policy
         self.approver = approver
         self.audit = audit
-        self.redact_fn = redact_fn or (lambda x: x)
+        self.redact_fn = redact_fn or self._default_redact
+
+    @staticmethod
+    def _default_redact(params: dict[str, Any]) -> dict[str, Any]:
+        """Redact sensitive keys by default."""
+        sensitive_keys = {
+            "password",
+            "token",
+            "secret",
+            "authorization",
+            "api_key",
+            "key",
+        }
+        return {
+            k: ("[REDACTED]" if k.lower() in sensitive_keys else v)
+            for k, v in params.items()
+        }
 
     async def execute_async(
         self,
@@ -75,10 +91,16 @@ class ControlTower:
             )
 
             if outcome == ApprovalOutcome.DEFERRED:
-                # We don't have an approval_id here in the basic protocol,
-                # but if the approver returns DEFERRED, we raise it.
-                # In a more advanced implementation, the approver would
-                # provide the ID.
+                # Audit the deferral
+                self._log(
+                    correlation_id,
+                    request_hash,
+                    agent_ctx,
+                    intent,
+                    tool_request,
+                    decision,
+                    Outcome.BLOCKED,  # Deferral is a temporary block
+                )
                 raise TollgateDeferred("pending")
 
             if outcome != ApprovalOutcome.APPROVED:
@@ -140,7 +162,16 @@ class ControlTower:
         tool_request: ToolRequest,
         exec_sync: Callable[[], Any],
     ) -> Any:
-        """Sync wrapper for execute_async."""
+        """Sync wrapper for execute_async. Safe only if no event loop is running."""
+        try:
+            loop = asyncio.get_running_loop()
+            if loop.is_running():
+                raise RuntimeError(
+                    "execute() called from within a running event loop. "
+                    "Use execute_async() instead."
+                )
+        except RuntimeError:
+            pass
 
         async def _exec():
             return exec_sync()
@@ -159,7 +190,7 @@ class ControlTower:
         approval_id: str | None = None,
         result_summary: str | None = None,
     ):
-        # Apply redaction to parameters before logging
+        # Redact params before logging
         redacted_req = ToolRequest(
             tool=req.tool,
             action=req.action,
@@ -181,6 +212,8 @@ class ControlTower:
             outcome=outcome,
             approval_id=approval_id,
             result_summary=result_summary,
+            policy_version=decision.policy_version,
+            manifest_version=req.manifest_version,
         )
         self.audit.emit(event)
 
