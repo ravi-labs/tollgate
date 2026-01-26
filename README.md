@@ -2,73 +2,69 @@
 
 Runtime enforcement layer for AI agent tool calls using **Identity + Intent + Policy**.
 
-`tollgate` provides a deterministic safety boundary for AI agents. It ensures every tool call is validated against a policy before execution, with support for human-in-the-loop approvals and structured audit logging.
+`tollgate` provides a deterministic safety boundary for AI agents. It ensures every tool call is validated against a policy before execution, with support for async human-in-the-loop approvals, framework interception (MCP, LangChain, OpenAI), and structured audit logging.
 
-## ✨ Features
+## ✨ v1 Core Principles
 
-- **Tiny Stable API**: Everything flows through `ControlTower.execute`.
-- **Deterministic**: Policy decisions are made by code/config, not LLMs.
-- **Framework Agnostic**: Works with LangChain, CrewAI, or custom agent loops.
-- **Pluggable**: Custom evaluators, approvers (Slack/Email), and audit sinks (Datadog/SQL).
-- **Audit-First**: Correlation IDs link every intent to a tool execution and outcome.
+1. **Interception-First**: Enforcement happens at the tool execution boundary via adapters.
+2. **Safe Defaults**: Any unknown tool effect or resource defaults to `DENY` or `ASK`.
+3. **Trust Model**: Tool metadata is trusted only if it comes from a developer-controlled **Tool Registry**.
+4. **Approval Integrity**: Approvals are cryptographically bound to a request hash and correlation ID.
+5. **Async-First**: Native support for asynchronous agent loops and approval flows.
+6. **Audit as Source of Truth**: Every decision and outcome is recorded with full integrity context.
 
 ## 🚀 60-Second Quickstart
 
-### 1. Define Policy (`policy.yaml`)
+### 1. Define a Tool Registry (`manifest.yaml`)
 ```yaml
-rules:
-  - id: allow_read
-    tool: database
-    action: query
-    decision: ALLOW
-  - id: ask_delete
-    tool: database
-    action: delete_row
-    decision: ASK
-    reason: "Deletions require human oversight."
+version: "1.0.0"
+tools:
+  "langchain:delete_user":
+    effect: "delete"
+    resource_type: "user"
 ```
 
-### 2. Integrate
+### 2. Define a Policy (`policy.yaml`)
+```yaml
+rules:
+  - id: ask_delete_user
+    tool: langchain
+    action: delete_user
+    decision: ASK
+    reason: "User deletions require human confirmation."
+```
+
+### 3. Integrate with LangChain
 ```python
-from tollgate import ControlTower, YamlPolicyEvaluator, CliApprover, JsonlAuditSink, ToolRequest, Effect
+from tollgate import ControlTower, ToolRegistry, YamlPolicyEvaluator, CliApprover, JsonlAuditSink
+from tollgate.interceptors.langchain import guard_tools
 
 # Setup the tower
+registry = ToolRegistry("manifest.yaml")
 tower = ControlTower(
     policy=YamlPolicyEvaluator("policy.yaml"),
     approver=CliApprover(),
     audit=JsonlAuditSink("audit.jsonl")
 )
 
-# Guard your tool calls
-def delete_user(user_id):
-    print(f"User {user_id} deleted.")
+# Intercept your tools
+guarded_tools = guard_tools(my_langchain_tools, tower, registry)
 
-# Inside your agent loop
-tower.execute(
-    agent_ctx=my_agent_context,
-    intent=my_intent,
-    tool_request=ToolRequest(
-        tool="database", action="delete_row", 
-        resource_type="user", effect=Effect.DELETE, 
-        params={"user_id": 123}
-    ),
-    tool_callable=delete_user
-)
+# Inside your agent loop, use guarded_tools just like normal tools.
+# Pass agent_ctx and intent to ainvoke() for full gating.
+await guarded_tools[0].ainvoke(input_data, agent_ctx=ctx, intent=intent)
 ```
 
-## 🛠 Installation
+## 🛠 Supported Frameworks
 
-```bash
-pip install tollgate
-```
+- **LangChain**: via `guard_tools` interceptor.
+- **OpenAI Tools**: via `OpenAIToolRunner`.
+- **MCP**: coming soon.
 
 ## 📂 Example: Mock Tickets
-A full demo is available in `examples/mock_tickets/`. It simulates an agent attempting to close stale tickets.
+A full demo is available in `examples/mock_tickets/`. It simulates an agent attempting to close tickets using a Tool Registry and Async approvals.
 
 ```bash
-# Setup
-pip install -e ".[dev]"
-
 # Run Demo
 python examples/mock_tickets/demo.py
 ```

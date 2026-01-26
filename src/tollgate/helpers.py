@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import Callable
 from functools import wraps
 from typing import Any
@@ -15,7 +16,10 @@ def wrap_tool(
     resource_type: str,
     effect: Effect,
 ):
-    """Wraps a tool callable to be executed through a ControlTower."""
+    """
+    Wraps a tool callable to be executed through a ControlTower.
+    Maintained for backward compatibility with v0.
+    """
 
     @wraps(tool_callable)
     def wrapper(
@@ -32,13 +36,26 @@ def wrap_tool(
             params=params,
             metadata=metadata or {},
         )
-        return tower.execute(agent_ctx, intent, req, tool_callable)
+
+        if asyncio.iscoroutinefunction(tool_callable):
+
+            async def _exec():
+                return await tool_callable(**params)
+
+            return asyncio.run(tower.execute_async(agent_ctx, intent, req, _exec))
+
+        return tower.execute(agent_ctx, intent, req, lambda: tool_callable(**params))
 
     return wrapper
 
 
 def guard(
-    tower: ControlTower, *, tool: str, action: str, resource_type: str, effect: Effect
+    tower: ControlTower,
+    *,
+    tool: str,
+    action: str,
+    resource_type: str,
+    effect: Effect,
 ):
     """Decorator to guard a tool function with a ControlTower."""
 

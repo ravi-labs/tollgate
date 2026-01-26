@@ -1,3 +1,4 @@
+import asyncio
 import sys
 from pathlib import Path
 
@@ -11,15 +12,18 @@ from tollgate import (  # noqa: E402
     CliApprover,
     ControlTower,
     JsonlAuditSink,
+    ToolRegistry,
     YamlPolicyEvaluator,
 )
 
 
-def main():
+async def main():
     policy_path = root / "policies" / "default.yaml"
+    manifest_path = Path(__file__).parent / "manifest.yaml"
     audit_path = Path(__file__).parent / "audit.jsonl"
 
     # 1. Setup Tollgate
+    registry = ToolRegistry(manifest_path)
     tower = ControlTower(
         policy=YamlPolicyEvaluator(policy_path),
         approver=CliApprover(),
@@ -27,17 +31,18 @@ def main():
     )
 
     # 2. Run Agent
-    agent = TicketCleanupAgent(tower)
+    agent = TicketCleanupAgent(tower, registry)
 
-    print("Starting Mock Tickets Demo...")
+    print("Starting Mock Tickets v1 Demo (Async)...")
     print(f"Policy: {policy_path}")
+    print(f"Manifest: {manifest_path}")
     print(f"Audit Log: {audit_path}")
 
     try:
-        agent.run()
+        await agent.run()
     except KeyboardInterrupt:
         print("\nDemo stopped.")
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

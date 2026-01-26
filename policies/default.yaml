@@ -1,6 +1,9 @@
+version: "1.0.0"
 rules:
+  # Principle 3: Trusted Attributes
+  # is_vip must come from a trusted metadata source (e.g. registry-enriched tool read)
   - id: deny_vip_deletion
-    tool: ticket_system
+    tool: langchain
     action: close_ticket
     decision: DENY
     reason: "Closing VIP tickets is strictly forbidden for AI agents."
@@ -8,7 +11,7 @@ rules:
       is_vip: true
 
   - id: ask_stale_ticket_closure
-    tool: ticket_system
+    tool: langchain
     action: close_ticket
     decision: ASK
     reason: "Closing stale tickets requires human verification."
@@ -17,8 +20,8 @@ rules:
         ">=": 90
 
   - id: allow_list_stale
-    tool: ticket_system
+    tool: langchain
     action: list_stale_tickets
     effect: read
     decision: ALLOW
-    reason: "Reading stale ticket lists is always allowed."
+    reason: "Reading stale ticket lists is allowed when trusted."

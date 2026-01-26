@@ -1,0 +1,8 @@
+version: "1.0.0"
+tools:
+  "langchain:list_stale_tickets":
+    effect: "read"
+    resource_type: "ticket_list"
+  "langchain:close_ticket":
+    effect: "write"
+    resource_type: "ticket"

@@ -23,15 +23,25 @@ def list_stale_tickets(min_age_days: int) -> list[dict]:
 
 
 def close_ticket(ticket_id: str):
-    """Closes a ticket by ID."""
+    """Closes a ticket by ID and returns trusted metadata."""
     tickets = _load_tickets()
-    found = False
-    for t in tickets:
-        if t["id"] == ticket_id:
-            t["status"] = "CLOSED"
-            found = True
-            break
-    if found:
-        _save_tickets(tickets)
-        return {"status": "success", "message": f"Ticket {ticket_id} closed."}
-    return {"status": "error", "message": f"Ticket {ticket_id} not found."}
+    ticket = next((t for t in tickets if t["id"] == ticket_id), None)
+
+    if not ticket:
+        return {"status": "error", "message": f"Ticket {ticket_id} not found."}
+
+    # Principle 3: Return trusted metadata from the source of truth
+    # The interceptor or agent will use this for gating
+    trusted_metadata = {
+        "ticket_age_days": ticket["age_days"],
+        "is_vip": ticket["is_vip"],
+    }
+
+    ticket["status"] = "CLOSED"
+    _save_tickets(tickets)
+
+    return {
+        "status": "success",
+        "message": f"Ticket {ticket_id} closed.",
+        "trusted_metadata": trusted_metadata,
+    }

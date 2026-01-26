@@ -14,7 +14,7 @@ class AuditSink(Protocol):
 
 
 class JsonlAuditSink:
-    """Audit sink that writes to a JSONL file."""
+    """Audit sink that writes to a JSONL file with buffering."""
 
     def __init__(self, log_path: str | Path):
         """Initialize the sink and ensure the log directory exists."""
@@ -24,7 +24,6 @@ class JsonlAuditSink:
 
     def _get_file(self):
         if self._f is None or self._f.closed:
-            # line buffered
             self._f = self.log_path.open("a", encoding="utf-8", buffering=1)
         return self._f
 

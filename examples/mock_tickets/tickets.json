@@ -44,7 +44,7 @@
   {
     "id": "T-8",
     "age_days": 150,
-    "status": "OPEN",
+    "status": "CLOSED",
     "is_vip": false
   },
   {
@@ -104,7 +104,7 @@
   {
     "id": "T-18",
     "age_days": 130,
-    "status": "OPEN",
+    "status": "CLOSED",
     "is_vip": false
   },
   {

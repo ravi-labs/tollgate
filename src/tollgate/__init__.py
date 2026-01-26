@@ -1,8 +1,16 @@
-from .approval import Approver, CliApprover
+from .approvals import (
+    ApprovalOutcome,
+    ApprovalStore,
+    AsyncQueueApprover,
+    CliApprover,
+    InMemoryApprovalStore,
+    compute_request_hash,
+)
 from .audit import AuditSink, JsonlAuditSink
 from .exceptions import TollgateApprovalDenied, TollgateDenied, TollgateError
 from .helpers import guard, wrap_tool
 from .policy import PolicyEvaluator, YamlPolicyEvaluator
+from .registry import ToolRegistry
 from .tower import ControlTower
 from .types import (
     AgentContext,
@@ -11,28 +19,35 @@ from .types import (
     DecisionType,
     Effect,
     Intent,
+    NormalizedToolCall,
     Outcome,
     ToolRequest,
 )
 
-__version__ = "0.0.1"
+__version__ = "1.0.0"
 
 __all__ = [
     "ControlTower",
     "AgentContext",
     "Intent",
     "ToolRequest",
+    "NormalizedToolCall",
     "Decision",
     "DecisionType",
     "Effect",
     "AuditEvent",
     "Outcome",
-    "PolicyEvaluator",
-    "YamlPolicyEvaluator",
-    "Approver",
+    "ApprovalOutcome",
+    "ApprovalStore",
+    "InMemoryApprovalStore",
+    "AsyncQueueApprover",
     "CliApprover",
+    "compute_request_hash",
     "AuditSink",
     "JsonlAuditSink",
+    "ToolRegistry",
+    "PolicyEvaluator",
+    "YamlPolicyEvaluator",
     "TollgateError",
     "TollgateDenied",
     "TollgateApprovalDenied",
