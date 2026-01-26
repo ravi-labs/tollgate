@@ -1,14 +1,15 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "ToolRequest",
-  "type": "OBJECT",
+  "type": "object",
   "properties": {
     "tool": { "type": "string" },
     "action": { "type": "string" },
     "resource_type": { "type": "string" },
-    "effect": { "enum": ["read", "write", "delete", "notify"] },
+    "effect": { "enum": ["read", "write", "delete", "notify", "unknown"] },
     "params": { "type": "object" },
-    "metadata": { "type": "object" }
+    "metadata": { "type": "object" },
+    "manifest_version": { "type": ["string", "null"] }
   },
   "required": ["tool", "action", "resource_type", "effect", "params"]
 }

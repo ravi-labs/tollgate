@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "AgentIdentity",
-  "type": "OBJECT",
+  "title": "AgentContext",
+  "type": "object",
   "properties": {
     "agent_id": { "type": "string" },
     "version": { "type": "string" },

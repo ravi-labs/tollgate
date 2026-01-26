@@ -1,16 +1,18 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "AuditEvent",
-  "type": "OBJECT",
+  "type": "object",
   "properties": {
     "timestamp": { "type": "string", "format": "date-time" },
     "correlation_id": { "type": "string" },
+    "request_hash": { "type": "string" },
     "agent": { "$ref": "identity.schema.json" },
     "intent": { "$ref": "intent.schema.json" },
     "tool_request": { "$ref": "tool_request.schema.json" },
     "decision": { "$ref": "decision.schema.json" },
-    "outcome": { "enum": ["executed", "blocked", "approval_denied"] },
-    "result_summary": { "type": "string" }
+    "outcome": { "enum": ["executed", "blocked", "approval_denied", "failed", "timeout"] },
+    "approval_id": { "type": ["string", "null"] },
+    "result_summary": { "type": ["string", "null"] }
   },
-  "required": ["timestamp", "correlation_id", "agent", "intent", "tool_request", "decision", "outcome"]
+  "required": ["timestamp", "correlation_id", "request_hash", "agent", "intent", "tool_request", "decision", "outcome"]
 }

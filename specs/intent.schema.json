@@ -1,11 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Intent",
-  "type": "OBJECT",
+  "type": "object",
   "properties": {
     "action": { "type": "string" },
     "reason": { "type": "string" },
-    "confidence": { "type": "number" },
+    "confidence": { "type": ["number", "null"] },
     "metadata": { "type": "object" }
   },
   "required": ["action", "reason"]
