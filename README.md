@@ -4,19 +4,38 @@ Runtime enforcement layer for AI agent tool calls using **Identity + Intent + Po
 
 `tollgate` provides a deterministic safety boundary for AI agents. It ensures every tool call is validated against a policy before execution, with support for async human-in-the-loop approvals, framework interception (MCP, Strands, LangChain, OpenAI), and structured audit logging.
 
-**[🚀 Quickstart Guide](./QUICKSTART.md) | [📊 Integration Comparison](./COMPARISON.md)**
+**[🚀 Quickstart Guide](https://github.com/ravi-labs/tollgate/blob/main/QUICKSTART.md) | [📊 Integration Comparison](https://github.com/ravi-labs/tollgate/blob/main/COMPARISON.md)**
 
-```mermaid
-graph TD
-    A[AI Agent] -->|Tool Call| B(Tollgate Interceptor)
-    B --> C{Policy + Registry}
-    C -->|ALLOW| D[Execute Tool]
-    C -->|DENY| E[Block & Audit]
-    C -->|ASK| F{Human Approval}
-    F -->|Approved| D
-    F -->|Denied| E
-    D --> G[Audit Log]
-    E --> G
+```
+┌────────────┐     ┌─────────────────────┐     ┌──────────────────┐
+│  AI Agent  │────▶│ Tollgate Interceptor│────▶│ Policy + Registry│
+└────────────┘     └─────────────────────┘     └────────┬─────────┘
+                                                        │
+                   ┌────────────────────────────────────┼────────────────────────────────────┐
+                   │                                    │                                    │
+                   ▼                                    ▼                                    ▼
+            ┌───────────┐                        ┌───────────┐                        ┌───────────┐
+            │   ALLOW   │                        │    ASK    │                        │   DENY    │
+            └─────┬─────┘                        └─────┬─────┘                        └─────┬─────┘
+                  │                                    │                                    │
+                  ▼                                    ▼                                    ▼
+            ┌───────────┐                     ┌───────────────┐                      ┌───────────┐
+            │  Execute  │                     │Human Approval │                      │  Block &  │
+            │   Tool    │                     │  (Approved?)  │                      │   Audit   │
+            └─────┬─────┘                     └───────┬───────┘                      └─────┬─────┘
+                  │                              ▼         ▼                               │
+                  │                          Yes │         │ No                            │
+                  │                              ▼         ▼                               │
+                  │                        ┌─────────┐ ┌─────────┐                         │
+                  │                        │ Execute │ │  Block  │                         │
+                  │                        └────┬────┘ └────┬────┘                         │
+                  │                             │           │                              │
+                  └─────────────────────────────┴───────────┴──────────────────────────────┘
+                                                        │
+                                                        ▼
+                                                 ┌───────────┐
+                                                 │ Audit Log │
+                                                 └───────────┘
 ```
 
 ## ✨ v1 Core Principles
