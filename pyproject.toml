@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tollgate"
-version = "1.0.2"
+version = "1.0.3"
 description = "Runtime enforcement layer for AI agent tool calls using Identity + Intent + Policy"
 readme = "README.md"
 requires-python = ">=3.10"
