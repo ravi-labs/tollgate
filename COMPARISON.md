@@ -2,6 +2,9 @@
 
 This guide demonstrates the minimal changes required to integrate `tollgate` into your existing AI agent workflows.
 
+> [!CAUTION]
+> **Disclaimer**: This project is an exploratory implementation intended for learning and discussion. It is not production-hardened and comes with no guarantees.
+
 ---
 
 ## 🔹 Scenario 1: Plain Python Tools

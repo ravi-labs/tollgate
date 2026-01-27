@@ -2,6 +2,9 @@
 
 Get started with `tollgate` in minutes. This guide covers the basic setup and integration options for various AI frameworks.
 
+> [!CAUTION]
+> **Disclaimer**: This project is an exploratory implementation intended for learning and discussion. It is not production-hardened and comes with no guarantees.
+
 ---
 
 ## 0. Key Concepts

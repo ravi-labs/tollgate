@@ -4,6 +4,9 @@ Runtime enforcement layer for AI agent tool calls using **Identity + Intent + Po
 
 `tollgate` provides a deterministic safety boundary for AI agents. It ensures every tool call is validated against a policy before execution, with support for async human-in-the-loop approvals, framework interception (MCP, Strands, LangChain, OpenAI), and structured audit logging.
 
+> [!CAUTION]
+> **Disclaimer**: This project is an exploratory implementation intended for learning and discussion. It is not production-hardened and comes with no guarantees.
+
 **[🚀 Quickstart Guide](https://github.com/ravi-labs/tollgate/blob/main/QUICKSTART.md) | [📊 Integration Comparison](https://github.com/ravi-labs/tollgate/blob/main/COMPARISON.md)**
 
 ```
