@@ -127,3 +127,7 @@ python examples/mock_tickets/demo.py
 
 ## 🛡️ Safe Defaults
 Remember: Any tool **not** in the registry or any action **not** matched by a policy will be **DENIED** by default in v1.0.0.
+
+---
+
+**[📊 See the Before vs. After Integration Comparison](./COMPARISON.md)**

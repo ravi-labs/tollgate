@@ -4,7 +4,7 @@ Runtime enforcement layer for AI agent tool calls using **Identity + Intent + Po
 
 `tollgate` provides a deterministic safety boundary for AI agents. It ensures every tool call is validated against a policy before execution, with support for async human-in-the-loop approvals, framework interception (MCP, Strands, LangChain, OpenAI), and structured audit logging.
 
-**[🚀 Check out the Quickstart Guide](./QUICKSTART.md)**
+**[🚀 Quickstart Guide](./QUICKSTART.md) | [📊 Integration Comparison](./COMPARISON.md)**
 
 ```mermaid
 graph TD
