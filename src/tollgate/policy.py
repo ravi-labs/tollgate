@@ -20,6 +20,10 @@ class PolicyEvaluator(Protocol):
 class YamlPolicyEvaluator:
     """YAML-based policy evaluator with safe defaults."""
 
+    # Security: Whitelist of allowed attributes for agent_ctx and intent matching
+    ALLOWED_AGENT_ATTRS = frozenset({"agent_id", "version", "environment", "role"})
+    ALLOWED_INTENT_ATTRS = frozenset({"action", "reason", "session_id"})
+
     def __init__(
         self,
         policy_path: str | Path,
@@ -108,15 +112,21 @@ class YamlPolicyEvaluator:
         if "effect" in rule and rule["effect"] != req.effect.value:
             return False
 
-        # Match Agent Context
+        # Match Agent Context (with attribute whitelist)
         if "agent" in rule:
             for key, expected_val in rule["agent"].items():
+                # Security: Only allow whitelisted attributes
+                if key not in self.ALLOWED_AGENT_ATTRS:
+                    continue
                 if getattr(agent_ctx, key, None) != expected_val:
                     return False
 
-        # Match Intent
+        # Match Intent (with attribute whitelist)
         if "intent" in rule:
             for key, expected_val in rule["intent"].items():
+                # Security: Only allow whitelisted attributes
+                if key not in self.ALLOWED_INTENT_ATTRS:
+                    continue
                 if getattr(intent, key, None) != expected_val:
                     return False
 

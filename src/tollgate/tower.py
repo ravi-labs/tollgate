@@ -127,7 +127,8 @@ class ControlTower:
             result = await exec_async()
         except Exception as e:
             outcome = Outcome.FAILED
-            result_summary = f"{type(e).__name__}: {str(e)}"
+            # Security: Sanitize exception message to avoid info disclosure
+            result_summary = self._sanitize_exception(e)
             self._log(
                 correlation_id,
                 request_hash,
@@ -222,3 +223,36 @@ class ControlTower:
             return None
         s = str(result)
         return s[:max_chars] + "..." if len(s) > max_chars else s
+
+    def _sanitize_exception(self, e: Exception, max_chars: int = 100) -> str:
+        """
+        Sanitize exception message for audit logging.
+
+        Removes potentially sensitive information like file paths, stack traces,
+        and internal details while preserving the exception type.
+        """
+        exc_type = type(e).__name__
+
+        # For common safe exceptions, include a truncated message
+        safe_exceptions = {
+            "ValueError",
+            "TypeError",
+            "KeyError",
+            "IndexError",
+            "AttributeError",
+            "RuntimeError",
+        }
+
+        if exc_type in safe_exceptions:
+            msg = str(e)
+            # Remove file paths (Unix and Windows style)
+            import re
+
+            msg = re.sub(r"['\"]?(/[^\s'\"]+|[A-Za-z]:\\[^\s'\"]+)['\"]?", "[PATH]", msg)
+            # Truncate to avoid leaking too much info
+            if len(msg) > max_chars:
+                msg = msg[:max_chars] + "..."
+            return f"{exc_type}: {msg}"
+
+        # For unknown exceptions, only log the type
+        return f"{exc_type}: [details redacted]"

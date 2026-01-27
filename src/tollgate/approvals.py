@@ -56,6 +56,7 @@ class InMemoryApprovalStore(ApprovalStore):
     def __init__(self):
         self._requests: dict[str, dict[str, Any]] = {}
         self._events: dict[str, asyncio.Event] = {}
+        self._lock = asyncio.Lock()
 
     async def create_request(
         self, agent_ctx, intent, tool_request, request_hash, reason, expiry
@@ -77,19 +78,21 @@ class InMemoryApprovalStore(ApprovalStore):
     async def set_decision(
         self, approval_id, outcome, decided_by, decided_at, request_hash
     ):
-        if approval_id in self._requests:
-            req = self._requests[approval_id]
-            # Replay protection: hash must match
-            if req["request_hash"] != request_hash:
-                raise ValueError(
-                    "Request hash mismatch. Approval bound to a different request."
-                )
+        # Security: Use lock for atomic read-modify-write operation
+        async with self._lock:
+            if approval_id in self._requests:
+                req = self._requests[approval_id]
+                # Replay protection: hash must match
+                if req["request_hash"] != request_hash:
+                    raise ValueError(
+                        "Request hash mismatch. Approval bound to a different request."
+                    )
 
-            req["outcome"] = outcome
-            req["decided_by"] = decided_by
-            req["decided_at"] = decided_at
-            if approval_id in self._events:
-                self._events[approval_id].set()
+                req["outcome"] = outcome
+                req["decided_by"] = decided_by
+                req["decided_at"] = decided_at
+                if approval_id in self._events:
+                    self._events[approval_id].set()
 
     async def get_request(self, approval_id):
         return self._requests.get(approval_id)
@@ -172,21 +175,35 @@ class AutoApprover:
 class CliApprover:
     """Async-wrapped CLI approver for development."""
 
-    def __init__(self, show_emojis: bool = True):
+    def __init__(self, show_emojis: bool = True, timeout: float = 300.0):
+        """
+        Initialize CliApprover.
+
+        :param show_emojis: Whether to display emojis in prompts.
+        :param timeout: Timeout in seconds for user input (default 5 minutes).
+        """
         self.show_emojis = show_emojis
+        self.timeout = timeout
 
     async def request_approval_async(
         self, agent_ctx, intent, tool_request, _hash, reason
     ) -> ApprovalOutcome:
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None,
-            self._sync_request,
-            agent_ctx,
-            intent,
-            tool_request,
-            reason,
-        )
+        try:
+            return await asyncio.wait_for(
+                loop.run_in_executor(
+                    None,
+                    self._sync_request,
+                    agent_ctx,
+                    intent,
+                    tool_request,
+                    reason,
+                ),
+                timeout=self.timeout,
+            )
+        except asyncio.TimeoutError:
+            print("\nApproval request timed out.")
+            return ApprovalOutcome.TIMEOUT
 
     def _sync_request(self, agent_ctx, intent, tool_request, reason) -> ApprovalOutcome:
         prefix = "🚦 " if self.show_emojis else ""
