@@ -32,11 +32,13 @@ class ControlTower:
         policy: PolicyEvaluator,
         approver: Approver,
         audit: AuditSink,
+        grant_store: Any | None = None,
         redact_fn: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
     ):
         self.policy = policy
         self.approver = approver
         self.audit = audit
+        self.grant_store = grant_store
         self.redact_fn = redact_fn or self._default_redact
 
     @staticmethod
@@ -86,6 +88,26 @@ class ControlTower:
 
         # 3. Handle ASK
         if decision.decision == DecisionType.ASK:
+            # 3.1 Check Grants
+            if self.grant_store:
+                matching_grant = await self.grant_store.find_matching_grant(
+                    agent_ctx, tool_request
+                )
+                if matching_grant:
+                    # Grant found! Proceed to execution without asking approver
+                    result = await self._execute_and_log(
+                        correlation_id,
+                        request_hash,
+                        agent_ctx,
+                        intent,
+                        tool_request,
+                        decision,
+                        exec_async,
+                        grant_id=matching_grant.id,
+                    )
+                    return result
+
+            # 3.2 Request Approval if no grant found
             outcome = await self.approver.request_approval_async(
                 agent_ctx, intent, tool_request, request_hash, decision.reason
             )
@@ -120,14 +142,35 @@ class ControlTower:
                 )
                 raise TollgateApprovalDenied(f"Approval failed: {outcome.value}")
 
-        # 4. Execute tool
+        # 4. Execute tool (Policy ALLOW or Approval APPROVED)
+        return await self._execute_and_log(
+            correlation_id,
+            request_hash,
+            agent_ctx,
+            intent,
+            tool_request,
+            decision,
+            exec_async,
+        )
+
+    async def _execute_and_log(
+        self,
+        correlation_id: str,
+        request_hash: str,
+        agent_ctx: AgentContext,
+        intent: Intent,
+        tool_request: ToolRequest,
+        decision: Decision,
+        exec_async: Callable[[], Awaitable[Any]],
+        grant_id: str | None = None,
+    ) -> Any:
+        """Internal helper to execute tool and log result."""
         result = None
         outcome = Outcome.EXECUTED
         try:
             result = await exec_async()
         except Exception as e:
             outcome = Outcome.FAILED
-            # Security: Sanitize exception message to avoid info disclosure
             result_summary = self._sanitize_exception(e)
             self._log(
                 correlation_id,
@@ -137,11 +180,12 @@ class ControlTower:
                 tool_request,
                 decision,
                 outcome,
+                grant_id=grant_id,
                 result_summary=result_summary,
             )
             raise
 
-        # 5. Final Audit
+        # Final Audit
         result_summary = self._truncate_result(result)
         self._log(
             correlation_id,
@@ -151,6 +195,7 @@ class ControlTower:
             tool_request,
             decision,
             outcome,
+            grant_id=grant_id,
             result_summary=result_summary,
         )
 
@@ -177,7 +222,9 @@ class ControlTower:
         async def _exec():
             return exec_sync()
 
-        return asyncio.run(self.execute_async(agent_ctx, intent, tool_request, _exec))
+        return asyncio.run(
+            self.execute_async(agent_ctx, intent, tool_request, _exec)
+        )
 
     def _log(
         self,
@@ -189,6 +236,7 @@ class ControlTower:
         decision: Decision,
         outcome: Outcome,
         approval_id: str | None = None,
+        grant_id: str | None = None,
         result_summary: str | None = None,
     ):
         # Redact params before logging
@@ -212,47 +260,20 @@ class ControlTower:
             decision=decision,
             outcome=outcome,
             approval_id=approval_id,
+            grant_id=grant_id,
             result_summary=result_summary,
             policy_version=decision.policy_version,
             manifest_version=req.manifest_version,
         )
         self.audit.emit(event)
 
+    def _sanitize_exception(self, e: Exception) -> str:
+        """Sanitize exception message to avoid leaking sensitive data."""
+        # Only include the exception type and a generic message for security
+        return f"{type(e).__name__}: Execution failed"
+
     def _truncate_result(self, result: Any, max_chars: int = 200) -> str | None:
         if result is None:
             return None
         s = str(result)
         return s[:max_chars] + "..." if len(s) > max_chars else s
-
-    def _sanitize_exception(self, e: Exception, max_chars: int = 100) -> str:
-        """
-        Sanitize exception message for audit logging.
-
-        Removes potentially sensitive information like file paths, stack traces,
-        and internal details while preserving the exception type.
-        """
-        exc_type = type(e).__name__
-
-        # For common safe exceptions, include a truncated message
-        safe_exceptions = {
-            "ValueError",
-            "TypeError",
-            "KeyError",
-            "IndexError",
-            "AttributeError",
-            "RuntimeError",
-        }
-
-        if exc_type in safe_exceptions:
-            msg = str(e)
-            # Remove file paths (Unix and Windows style)
-            import re
-
-            msg = re.sub(r"['\"]?(/[^\s'\"]+|[A-Za-z]:\\[^\s'\"]+)['\"]?", "[PATH]", msg)
-            # Truncate to avoid leaking too much info
-            if len(msg) > max_chars:
-                msg = msg[:max_chars] + "..."
-            return f"{exc_type}: {msg}"
-
-        # For unknown exceptions, only log the type
-        return f"{exc_type}: [details redacted]"

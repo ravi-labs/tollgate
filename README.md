@@ -52,6 +52,30 @@ Runtime enforcement layer for AI agent tool calls using **Identity + Intent + Po
 
 ## 🚀 v1 Integrations
 
+### 🎟️ Session Grants
+Grants allow you to pre-authorize specific actions for an agent session, bypassing human-in-the-loop approvals for repetitive or low-risk tasks.
+
+```python
+from tollgate import Grant, InMemoryGrantStore, Effect
+
+# 1. Setup a grant store
+grant_store = InMemoryGrantStore()
+tower = ControlTower(..., grant_store=grant_store)
+
+# 2. Issue a grant (e.g., after initial human approval)
+grant = Grant(
+    agent_id="my-agent",
+    effect=Effect.WRITE,
+    tool="mcp:*", # Wildcard prefix: matches any MCP tool (e.g., "mcp:server.write")
+    action=None,  # Wildcard: matches any action
+    resource_type=None,
+    expires_at=time.time() + 3600, # Valid for 1 hour
+    granted_by="admin-user",
+    created_at=time.time()
+)
+await grant_store.create_grant(grant)
+```
+
 ### MCP (Model Context Protocol)
 Wrap an MCP client to gate all tool calls:
 ```python

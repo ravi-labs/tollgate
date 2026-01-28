@@ -1,3 +1,4 @@
+import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import asdict, dataclass, field
 from enum import Enum
@@ -93,6 +94,28 @@ class Decision:
 
 
 @dataclass(frozen=True)
+class Grant:
+    """A grant that allows bypassing human approval for specific actions."""
+
+    agent_id: str | None  # None = any agent
+    effect: Effect | None  # None = any effect
+    tool: str | None  # None = any tool, supports prefix like "mcp:*"
+    action: str | None  # None = any action
+    resource_type: str | None  # None = any resource
+    expires_at: float  # Unix timestamp
+    granted_by: str
+    created_at: float
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    reason: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        d = asdict(self)
+        if self.effect:
+            d["effect"] = self.effect.value
+        return d
+
+
+@dataclass(frozen=True)
 class AuditEvent:
     timestamp: str
     correlation_id: str
@@ -103,6 +126,7 @@ class AuditEvent:
     decision: Decision
     outcome: Outcome
     approval_id: str | None = None
+    grant_id: str | None = None
     result_summary: str | None = None
     policy_version: str | None = None
     manifest_version: str | None = None
@@ -118,6 +142,7 @@ class AuditEvent:
             "decision": self.decision.to_dict(),
             "outcome": self.outcome.value,
             "approval_id": self.approval_id,
+            "grant_id": self.grant_id,
             "result_summary": self.result_summary,
             "policy_version": self.policy_version,
             "manifest_version": self.manifest_version,

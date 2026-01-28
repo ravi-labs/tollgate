@@ -1,5 +1,4 @@
 from .approvals import (
-    ApprovalOutcome,
     ApprovalStore,
     Approver,
     AsyncQueueApprover,
@@ -15,23 +14,26 @@ from .exceptions import (
     TollgateDenied,
     TollgateError,
 )
+from .grants import InMemoryGrantStore
 from .helpers import guard, wrap_tool
 from .policy import PolicyEvaluator, YamlPolicyEvaluator
 from .registry import ToolRegistry
 from .tower import ControlTower
 from .types import (
     AgentContext,
+    ApprovalOutcome,
     AuditEvent,
     Decision,
     DecisionType,
     Effect,
+    Grant,
     Intent,
     NormalizedToolCall,
     Outcome,
     ToolRequest,
 )
 
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 
 __all__ = [
     "ControlTower",
@@ -42,6 +44,7 @@ __all__ = [
     "Decision",
     "DecisionType",
     "Effect",
+    "Grant",
     "AuditEvent",
     "Outcome",
     "ApprovalOutcome",
@@ -57,6 +60,7 @@ __all__ = [
     "ToolRegistry",
     "PolicyEvaluator",
     "YamlPolicyEvaluator",
+    "InMemoryGrantStore",
     "TollgateError",
     "TollgateDenied",
     "TollgateApprovalDenied",
