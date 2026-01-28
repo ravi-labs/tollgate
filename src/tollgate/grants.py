@@ -1,7 +1,53 @@
 import asyncio
 import time
+from typing import Protocol, runtime_checkable
 
 from .types import AgentContext, Grant, ToolRequest
+
+
+@runtime_checkable
+class GrantStore(Protocol):
+    """Protocol for grant storage backends.
+
+    Implement this protocol to use a custom storage backend (Redis, SQLite, etc.).
+
+    Example Redis implementation:
+
+        class RedisGrantStore:
+            def __init__(self, redis_client):
+                self.redis = redis_client
+
+            async def create_grant(self, grant: Grant) -> str:
+                await self.redis.hset(f"grant:{grant.id}", mapping=grant.to_dict())
+                await self.redis.expireat(f"grant:{grant.id}", int(grant.expires_at))
+                return grant.id
+
+            async def find_matching_grant(self, agent_ctx, tool_request) -> Grant | None:
+                # Implement matching logic with Redis SCAN or secondary indexes
+                ...
+
+    All methods must be async. The InMemoryGrantStore serves as the reference implementation.
+    """
+
+    async def create_grant(self, grant: Grant) -> str:
+        ...
+
+    async def find_matching_grant(
+        self, agent_ctx: AgentContext, tool_request: ToolRequest
+    ) -> Grant | None:
+        ...
+
+    async def revoke_grant(self, grant_id: str) -> bool:
+        ...
+
+    async def list_active_grants(self, agent_id: str | None = None) -> list[Grant]:
+        ...
+
+    async def cleanup_expired(self) -> int:
+        ...
+
+    async def get_usage_count(self, grant_id: str) -> int:
+        ...
 
 
 class InMemoryGrantStore:

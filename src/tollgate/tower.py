@@ -11,6 +11,7 @@ from .exceptions import (
     TollgateDeferred,
     TollgateDenied,
 )
+from .grants import GrantStore
 from .policy import PolicyEvaluator
 from .types import (
     AgentContext,
@@ -32,7 +33,7 @@ class ControlTower:
         policy: PolicyEvaluator,
         approver: Approver,
         audit: AuditSink,
-        grant_store: Any | None = None,
+        grant_store: GrantStore | None = None,
         redact_fn: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
     ):
         self.policy = policy

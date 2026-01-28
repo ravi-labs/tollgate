@@ -14,7 +14,7 @@ from .exceptions import (
     TollgateDenied,
     TollgateError,
 )
-from .grants import InMemoryGrantStore
+from .grants import GrantStore, InMemoryGrantStore
 from .helpers import guard, wrap_tool
 from .policy import PolicyEvaluator, YamlPolicyEvaluator
 from .registry import ToolRegistry
@@ -33,7 +33,7 @@ from .types import (
     ToolRequest,
 )
 
-__version__ = "1.0.4"
+__version__ = "1.0.3"
 
 __all__ = [
     "ControlTower",
@@ -45,6 +45,7 @@ __all__ = [
     "DecisionType",
     "Effect",
     "Grant",
+    "GrantStore",
     "AuditEvent",
     "Outcome",
     "ApprovalOutcome",

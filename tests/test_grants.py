@@ -284,3 +284,22 @@ async def test_tower_uses_grant(agent_ctx, tool_req):
     event = audit.events[-1]
     assert event.grant_id == grant.id
     assert event.outcome == Outcome.EXECUTED
+
+@pytest.mark.asyncio
+async def test_grant_store_protocol_compliance():
+    """Verify InMemoryGrantStore implements GrantStore protocol."""
+    from tollgate import GrantStore, InMemoryGrantStore
+
+    store = InMemoryGrantStore()
+
+    # Protocol requires these methods exist and are callable
+    assert hasattr(store, "create_grant")
+    assert hasattr(store, "find_matching_grant")
+    assert hasattr(store, "revoke_grant")
+    assert hasattr(store, "list_active_grants")
+    assert hasattr(store, "cleanup_expired")
+    assert hasattr(store, "get_usage_count")
+
+    # Verify it's recognized as implementing the protocol
+    # Note: requires runtime_checkable on GrantStore
+    assert isinstance(store, GrantStore)
