@@ -1,12 +1,42 @@
-.venv/
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-.pytest_cache/
-.ruff_cache/
+.venv/
+env/
+venv/
+ENV/
+*.egg-info/
 dist/
 build/
-*.egg-info/
+
+# Testing
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Environment variables
+.env
+.env.*
+
+# Office documents (requested)
+*.docx
+*.pptx
+
+# Local demo files
 examples/mock_tickets/audit.jsonl
 examples/mock_tickets/tickets.json.bak
+
+# IDEs
+.vscode/
+.idea/
+.cursor/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*

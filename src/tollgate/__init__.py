@@ -43,7 +43,7 @@ from .types import (
     ToolRequest,
 )
 
-__version__ = "1.0.5"
+__version__ = "1.4.0"
 
 __all__ = [
     "ControlTower",

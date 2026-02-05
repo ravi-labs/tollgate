@@ -1,5 +1,10 @@
 # tollgate
 
+[![CI](https://github.com/ravi-labs/tollgate/actions/workflows/ci.yml/badge.svg)](https://github.com/ravi-labs/tollgate/actions/workflows/ci.yml)
+[![PyPI version](https://img.shields.io/pypi/v/tollgate)](https://pypi.org/project/tollgate/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://pypi.org/project/tollgate/)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
+
 Runtime enforcement layer for AI agent tool calls using **Identity + Intent + Policy**.
 
 `tollgate` provides a deterministic safety boundary for AI agents. It ensures every tool call is validated against a policy before execution, with support for async human-in-the-loop approvals, framework interception (MCP, Strands, LangChain, OpenAI), and structured audit logging.
@@ -7,7 +12,7 @@ Runtime enforcement layer for AI agent tool calls using **Identity + Intent + Po
 > [!CAUTION]
 > **Disclaimer**: This project is an exploratory implementation intended for learning and discussion. It is not production-hardened and comes with no guarantees.
 
-**[Quickstart Guide](./QUICKSTART.md) | [Feature Guide](./FEATURES.md) | [Integration Comparison](./COMPARISON.md) | [Security](./SECURITY.md)**
+**[Architecture](./ARCHITECTURE.md) | [Quickstart Guide](./QUICKSTART.md) | [Feature Guide](./FEATURES.md) | [Integration Comparison](./COMPARISON.md) | [Security](./SECURITY.md)**
 
 ```
                           +-----------------+
