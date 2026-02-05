@@ -306,15 +306,22 @@ class TestDelegationPolicyMatching:
         decision = policy.evaluate(blocked_ctx, intent, req)
         assert decision.decision == DecisionType.DENY
 
-    def test_direct_agent_not_affected_by_delegator_rules(self, tmp_path):
+    def test_direct_agent_excluded_by_allowed_delegators(self, tmp_path):
+        """allowed_delegators requires the agent to be delegated. Direct agents
+        should NOT match a rule with allowed_delegators, ensuring such rules
+        only apply to explicitly delegated contexts."""
         policy = self._make_policy(tmp_path, """
-  - id: allow_writes
+  - id: allow_trusted_delegated_writes
     effect: write
     decision: ALLOW
-    reason: "Allow writes"
+    reason: "Allow writes from trusted delegators"
     agent:
       allowed_delegators:
         - "trusted-orchestrator"
+  - id: allow_direct_writes
+    effect: write
+    decision: ALLOW
+    reason: "Allow direct writes"
   - id: deny_default
     decision: DENY
     reason: "Default deny"
@@ -325,13 +332,32 @@ class TestDelegationPolicyMatching:
             effect=Effect.WRITE, params={}, manifest_version="1.0",
         )
 
-        # Direct agent (not delegated) — allowed_delegators check only
-        # applies to delegated agents
+        # Direct agent (not delegated) — should NOT match allowed_delegators
+        # rule, and instead fall through to the next matching rule
         direct_ctx = AgentContext(
             agent_id="direct-agent", version="1.0", owner="team-a",
         )
         decision = policy.evaluate(direct_ctx, intent, req)
         assert decision.decision == DecisionType.ALLOW
+        assert decision.policy_id == "allow_direct_writes"
+
+        # Trusted delegated agent SHOULD match allowed_delegators rule
+        delegated_ctx = AgentContext(
+            agent_id="worker", version="1.0", owner="team-a",
+            delegated_by=("trusted-orchestrator",),
+        )
+        decision = policy.evaluate(delegated_ctx, intent, req)
+        assert decision.decision == DecisionType.ALLOW
+        assert decision.policy_id == "allow_trusted_delegated_writes"
+
+        # Untrusted delegated agent should NOT match allowed_delegators
+        untrusted_ctx = AgentContext(
+            agent_id="worker", version="1.0", owner="team-a",
+            delegated_by=("unknown-agent",),
+        )
+        decision = policy.evaluate(untrusted_ctx, intent, req)
+        assert decision.decision == DecisionType.ALLOW
+        assert decision.policy_id == "allow_direct_writes"
 
     @pytest.mark.asyncio
     async def test_tower_with_delegated_agent(self, intent, tool_req):

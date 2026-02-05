@@ -262,11 +262,17 @@ class PolicyTestRunner:
 
     @staticmethod
     def _build_agent_context(data: dict[str, Any]) -> AgentContext:
+        delegated_by = data.get("delegated_by")
+        if delegated_by is not None:
+            delegated_by = tuple(delegated_by)
+        else:
+            delegated_by = ()
         return AgentContext(
             agent_id=data.get("agent_id", "test-agent"),
             version=data.get("version", "1.0"),
             owner=data.get("owner", "test-owner"),
             metadata=data.get("metadata", {}),
+            delegated_by=delegated_by,
         )
 
     @staticmethod

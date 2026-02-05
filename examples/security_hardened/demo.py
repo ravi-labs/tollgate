@@ -197,10 +197,13 @@ async def demo_full_security_stack():
         manifest_version="1.0.0",
     )
 
+    async def fetch_data():
+        return {"data": "example response"}
+
     try:
         result = await tower.execute_async(
             agent, intent, request,
-            lambda: {"data": "example response"},
+            fetch_data,
         )
         print(f"   SUCCESS: {result}")
     except Exception as e:
@@ -231,10 +234,13 @@ async def demo_full_security_stack():
     )
     write_intent = Intent(action="write_file", reason="Demo: write file")
 
+    async def write_file():
+        return {"status": "written"}
+
     try:
         result = await tower.execute_async(
             delegated_agent, write_intent, write_request,
-            lambda: {"status": "written"},
+            write_file,
         )
         print(f"   SUCCESS (trusted delegation): {result}")
     except Exception as e:
@@ -256,7 +262,7 @@ async def demo_full_security_stack():
     try:
         result = await tower.execute_async(
             deep_agent, write_intent, write_request,
-            lambda: {"status": "written"},
+            write_file,
         )
         print(f"   UNEXPECTED SUCCESS: {result}")
     except TollgateDenied as e:
@@ -280,15 +286,21 @@ async def demo_full_security_stack():
 
     # 8. Demo: Rate limiting
     print("\n8. Testing rate limiting...")
-    for i in range(5):
+    for i in range(12):
+        async def make_response():
+            return {"data": f"response {i}"}
+
         try:
             await tower.execute_async(
                 agent, intent, request,
-                lambda: {"data": f"response {i}"},
+                make_response,
             )
             print(f"   Call {i+1}: SUCCESS")
         except TollgateRateLimited as e:
-            print(f"   Call {i+1}: RATE LIMITED - {e}")
+            print(f"   Call {i+1}: RATE LIMITED")
+            break
+        except TollgateDenied as e:
+            print(f"   Call {i+1}: DENIED - {e}")
             break
 
     # 9. Stats summary
