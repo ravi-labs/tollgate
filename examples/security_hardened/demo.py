@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Security Hardened Tollgate Demo
 
-Demonstrates all Month 1-3 security features:
+Demonstrates all security features:
 - Agent identity signing
 - Rate limiting
 - Circuit breaker
@@ -321,7 +321,7 @@ async def main():
     """Run all demos."""
     print("\n" + "="*60)
     print("  TOLLGATE SECURITY HARDENED DEMO")
-    print("  Demonstrating Month 1-3 Security Features")
+    print("  Demonstrating All Security Features")
     print("="*60)
 
     # Run policy tests first

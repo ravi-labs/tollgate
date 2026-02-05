@@ -119,7 +119,7 @@ asyncio.run(main())
 
 ## Feature Highlights
 
-### Security Hardening (Month 1)
+### Security Hardening
 
 | Feature | Description |
 |---------|-------------|
@@ -145,7 +145,7 @@ signed_agent = sign_agent_context(agent, secret)
 tower = ControlTower(..., verify_fn=make_verifier(secret), rate_limiter=limiter)
 ```
 
-### Resilience & Protection (Month 2)
+### Resilience & Protection
 
 | Feature | Description |
 |---------|-------------|
@@ -182,7 +182,7 @@ registry = ToolRegistry("manifest.yaml", signing_key=b"build-secret")
 tower = ControlTower(..., circuit_breaker=breaker, network_guard=guard)
 ```
 
-### Defense in Depth (Month 3)
+### Defense in Depth
 
 | Feature | Description |
 |---------|-------------|

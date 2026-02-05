@@ -1,10 +1,10 @@
 # Security Hardened Example
 
-This example demonstrates all security features added in the Month 1-3 roadmap:
+This example demonstrates all of Tollgate's security features working together.
 
 ## Features Demonstrated
 
-### Month 1: Foundation
+### Security Hardening
 - **Parameter Schema Validation**: JSON Schema validation for tool parameters
 - **Rate Limiting**: Sliding window rate limits per agent/tool/effect
 - **Agent Identity Signing**: HMAC-SHA256 verification of agent contexts
@@ -12,12 +12,12 @@ This example demonstrates all security features added in the Month 1-3 roadmap:
 - **Webhook Alerts**: Real-time alerts for denied events
 - **Audit Schema Versioning**: Forward-compatible audit events
 
-### Month 2: Perimeter
+### Resilience & Protection
 - **Circuit Breaker**: Auto-disable failing tools
 - **Manifest Signing**: HMAC-SHA256 integrity verification
 - **NetworkGuard**: Global URL policy enforcement
 
-### Month 3: Defense in Depth
+### Defense in Depth
 - **Multi-Agent Delegation**: Track and control delegation chains
 - **Policy Testing**: Declarative scenario-based testing
 - **Context Integrity Monitor**: Detect memory/context poisoning

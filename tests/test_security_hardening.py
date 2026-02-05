@@ -1,12 +1,12 @@
-"""Tests for Month 1 roadmap features (1.1 through 1.6).
+"""Tests for security hardening features.
 
 Covers:
-  1.1 - Parameter Schema Validation
-  1.2 - Rate Limiting
-  1.3 - Audit Schema Versioning
-  1.4 - READ Gating / Constraints
-  1.5 - WebhookAuditSink + CompositeAuditSink
-  1.6 - Agent Identity HMAC Signing
+  - Parameter Schema Validation
+  - Rate Limiting
+  - Audit Schema Versioning
+  - READ Gating / Constraints
+  - WebhookAuditSink + CompositeAuditSink
+  - Agent Identity HMAC Signing
 """
 
 import time
@@ -743,7 +743,7 @@ class TestAgentIdentityVerification:
 class TestIntegration:
     @pytest.mark.asyncio
     async def test_full_pipeline_identity_rate_schema_constraints(self, tmp_path, intent):
-        """Test all Month 1 features working together in the enforcement pipeline."""
+        """Test all security hardening features working together in the enforcement pipeline."""
         manifest = tmp_path / "manifest.yaml"
         manifest.write_text("""
 version: "1.0.0"

@@ -1,10 +1,10 @@
-"""Tests for Month 2 roadmap features (2.1, 2.2, 2.3, 2.6).
+"""Tests for resilience and protection features.
 
 Covers:
-  2.1 - Circuit Breaker Pattern
-  2.2 - Cryptographic Manifest Signing (HMAC-SHA256)
-  2.3 - Global URL Allowlisting (NetworkGuard)
-  2.6 - Persistent Backends (SQLite GrantStore + ApprovalStore)
+  - Circuit Breaker Pattern
+  - Cryptographic Manifest Signing (HMAC-SHA256)
+  - Global URL Allowlisting (NetworkGuard)
+  - Persistent Backends (SQLite GrantStore + ApprovalStore)
 """
 
 import asyncio
@@ -990,12 +990,12 @@ class TestSQLiteApprovalStore:
 
 
 # ─────────────────────────────────────────────────────────────────────
-# Integration: Month 2 features combined
+# Integration: resilience and protection features combined
 # ─────────────────────────────────────────────────────────────────────
 
 
 class TestMonth2Integration:
-    """Integration tests combining multiple Month 2 features."""
+    """Integration tests combining multiple resilience and protection features."""
 
     @pytest.mark.asyncio
     async def test_circuit_breaker_plus_network_guard(self, agent_ctx, intent):

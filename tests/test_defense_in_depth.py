@@ -1,10 +1,10 @@
-"""Tests for Month 3 roadmap features (3.1, 3.2, 3.3, 3.4).
+"""Tests for defense in depth features.
 
 Covers:
-  3.1 - Memory/Context Poisoning Detection (ContextIntegrityMonitor)
-  3.2 - Anomaly Detection on Audit Streams (AnomalyDetector)
-  3.3 - Policy Testing Framework (PolicyTestRunner)
-  3.4 - Multi-Agent Delegation Security (AgentContext.delegated_by)
+  - Memory/Context Poisoning Detection (ContextIntegrityMonitor)
+  - Anomaly Detection on Audit Streams (AnomalyDetector)
+  - Policy Testing Framework (PolicyTestRunner)
+  - Multi-Agent Delegation Security (AgentContext.delegated_by)
 """
 
 import time
@@ -1048,12 +1048,12 @@ class TestAnomalyDetector:
 
 
 # ─────────────────────────────────────────────────────────────────────
-# Integration: Month 3 features combined
+# Integration: defense in depth features combined
 # ─────────────────────────────────────────────────────────────────────
 
 
 class TestMonth3Integration:
-    """Integration tests combining multiple Month 3 features."""
+    """Integration tests combining multiple defense in depth features."""
 
     @pytest.mark.asyncio
     async def test_delegated_agent_with_context_monitor(self, intent, tool_req):
