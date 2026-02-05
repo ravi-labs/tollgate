@@ -1,0 +1,62 @@
+# Tool manifest with security features
+version: "1.0.0"
+
+tools:
+  # Read-only tool with URL constraints
+  "api:fetch_data":
+    effect: read
+    resource_type: data
+    constraints:
+      allowed_url_patterns:
+        - "https://api.github.com/*"
+        - "https://api.example.com/*"
+      blocked_url_patterns:
+        - "http://*"
+
+  # Write tool with parameter schema
+  "api:write_file":
+    effect: write
+    resource_type: file
+    params_schema:
+      type: object
+      required:
+        - path
+        - content
+      properties:
+        path:
+          type: string
+          pattern: "^/safe/"
+          maxLength: 255
+        content:
+          type: string
+          maxLength: 1048576  # 1MB max
+
+  # Delete tool (high risk)
+  "api:delete_resource":
+    effect: delete
+    resource_type: resource
+    params_schema:
+      type: object
+      required:
+        - resource_id
+      properties:
+        resource_id:
+          type: string
+          pattern: "^[a-zA-Z0-9-]+$"
+
+  # Notification tool
+  "api:send_notification":
+    effect: notify
+    resource_type: notification
+    params_schema:
+      type: object
+      required:
+        - recipient
+        - message
+      properties:
+        recipient:
+          type: string
+          format: email
+        message:
+          type: string
+          maxLength: 1000

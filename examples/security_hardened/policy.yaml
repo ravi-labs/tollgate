@@ -1,0 +1,63 @@
+# Security-hardened policy with delegation controls
+#
+# Delegation constraints in the `agent:` block act as FILTERS:
+#   deny_delegated: true       → Rule won't match delegated agents
+#   max_delegation_depth: N    → Rule won't match agents with depth > N
+#   allowed_delegators: [...]  → Rule won't match delegated agents from other sources
+#   blocked_delegators: [...]  → Rule won't match agents delegated by these
+#
+# Rules are evaluated top-to-bottom; first match wins.
+version: "1.0"
+
+rules:
+  # 1. Allow reads for any agent (delegated or not)
+  - id: allow_reads
+    effect: read
+    decision: ALLOW
+    reason: "Read operations are safe"
+
+  # 2. Allow notifications for any agent
+  - id: allow_notify
+    effect: notify
+    decision: ALLOW
+    reason: "Notifications are allowed"
+
+  # 3. Allow writes from trusted delegation chains (shallow)
+  #    Only matches agents delegated by "orchestrator" or "ci-runner"
+  #    with max depth of 2
+  - id: allow_trusted_delegation
+    agent:
+      allowed_delegators:
+        - "orchestrator"
+        - "ci-runner"
+      max_delegation_depth: 2
+    effect: write
+    decision: ALLOW
+    reason: "Trusted delegation chain"
+
+  # 4. Require approval for direct (non-delegated) writes
+  #    deny_delegated: true → this rule skips delegated agents
+  - id: ask_direct_writes
+    agent:
+      deny_delegated: true
+    effect: write
+    decision: ASK
+    reason: "Write requires human approval"
+
+  # 5. Deny all other delegated writes (untrusted or deep chains)
+  #    Catches delegated agents that didn't match rule 3
+  - id: deny_untrusted_delegation
+    effect: write
+    decision: DENY
+    reason: "Untrusted or deep delegation chain"
+
+  # 6. Require approval for deletes
+  - id: ask_deletes
+    effect: delete
+    decision: ASK
+    reason: "Delete requires human approval"
+
+  # 7. Default deny
+  - id: deny_default
+    decision: DENY
+    reason: "No matching rule - denied by default"

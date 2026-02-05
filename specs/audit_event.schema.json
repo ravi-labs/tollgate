@@ -3,6 +3,7 @@
   "title": "AuditEvent",
   "type": "object",
   "properties": {
+    "schema_version": { "type": "string", "description": "Audit event schema version for forward compatibility", "default": "1.0" },
     "timestamp": { "type": "string", "format": "date-time" },
     "correlation_id": { "type": "string" },
     "request_hash": { "type": "string" },
@@ -14,5 +15,5 @@
     "approval_id": { "type": ["string", "null"] },
     "result_summary": { "type": ["string", "null"] }
   },
-  "required": ["timestamp", "correlation_id", "request_hash", "agent", "intent", "tool_request", "decision", "outcome"]
+  "required": ["schema_version", "timestamp", "correlation_id", "request_hash", "agent", "intent", "tool_request", "decision", "outcome"]
 }

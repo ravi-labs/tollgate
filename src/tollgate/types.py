@@ -40,9 +40,27 @@ class AgentContext:
     version: str
     owner: str
     metadata: dict[str, Any] = field(default_factory=dict)
+    delegated_by: tuple[str, ...] = field(default_factory=tuple)
+
+    @property
+    def delegation_depth(self) -> int:
+        """Number of agents in the delegation chain (0 = direct call)."""
+        return len(self.delegated_by)
+
+    @property
+    def is_delegated(self) -> bool:
+        """Whether this agent was delegated to by another agent."""
+        return len(self.delegated_by) > 0
+
+    @property
+    def root_agent(self) -> str:
+        """The original (root) agent that started the delegation chain."""
+        return self.delegated_by[0] if self.delegated_by else self.agent_id
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        d = asdict(self)
+        d["delegated_by"] = list(self.delegated_by)
+        return d
 
 
 @dataclass(frozen=True)
@@ -130,9 +148,11 @@ class AuditEvent:
     result_summary: str | None = None
     policy_version: str | None = None
     manifest_version: str | None = None
+    schema_version: str = "1.0"
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            "schema_version": self.schema_version,
             "timestamp": self.timestamp,
             "correlation_id": self.correlation_id,
             "request_hash": self.request_hash,

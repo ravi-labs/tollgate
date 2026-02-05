@@ -26,3 +26,23 @@ class TollgateDeferred(TollgateError):  # noqa: N818
     def __init__(self, approval_id: str):
         self.approval_id = approval_id
         super().__init__(f"Tool call deferred. Approval ID: {approval_id}")
+
+
+class TollgateRateLimited(TollgateError):  # noqa: N818
+    """Raised when a tool call is rejected due to rate limiting."""
+
+    def __init__(self, reason: str, retry_after: float | None = None):
+        self.reason = reason
+        self.retry_after = retry_after
+        msg = f"Rate limited: {reason}"
+        if retry_after is not None:
+            msg += f" (retry after {retry_after:.1f}s)"
+        super().__init__(msg)
+
+
+class TollgateConstraintViolation(TollgateError):  # noqa: N818
+    """Raised when tool parameters violate manifest constraints."""
+
+    def __init__(self, reason: str):
+        self.reason = reason
+        super().__init__(f"Constraint violation: {reason}")

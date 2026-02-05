@@ -1,12 +1,64 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "AgentContext",
+  "description": "Identifies an AI agent making a tool call request",
   "type": "object",
   "properties": {
-    "agent_id": { "type": "string" },
-    "version": { "type": "string" },
-    "owner": { "type": "string" },
-    "metadata": { "type": "object" }
+    "agent_id": {
+      "type": "string",
+      "description": "Unique identifier for the agent"
+    },
+    "version": {
+      "type": "string",
+      "description": "Version of the agent"
+    },
+    "owner": {
+      "type": "string",
+      "description": "Team or individual responsible for the agent"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata (environment, session, etc.)",
+      "properties": {
+        "_signature": {
+          "type": "string",
+          "description": "HMAC-SHA256 signature for identity verification (v1.2+)"
+        }
+      },
+      "additionalProperties": true
+    },
+    "delegated_by": {
+      "type": "array",
+      "description": "Chain of agents that delegated to this agent (v1.4+)",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    }
   },
-  "required": ["agent_id", "version", "owner"]
+  "required": ["agent_id", "version", "owner"],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "agent_id": "my-agent",
+      "version": "1.0.0",
+      "owner": "my-team"
+    },
+    {
+      "agent_id": "my-agent",
+      "version": "1.0.0",
+      "owner": "my-team",
+      "metadata": {
+        "environment": "production",
+        "_signature": "abc123..."
+      }
+    },
+    {
+      "agent_id": "sub-agent",
+      "version": "1.0.0",
+      "owner": "my-team",
+      "delegated_by": ["orchestrator", "router"],
+      "metadata": {}
+    }
+  ]
 }

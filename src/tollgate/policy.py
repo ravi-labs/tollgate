@@ -22,6 +22,13 @@ class YamlPolicyEvaluator:
 
     # Security: Whitelist of allowed attributes for agent_ctx and intent matching
     ALLOWED_AGENT_ATTRS = frozenset({"agent_id", "version", "environment", "role"})
+    # Delegation-aware matching keys (checked separately from ALLOWED_AGENT_ATTRS)
+    DELEGATION_KEYS = frozenset({
+        "max_delegation_depth",
+        "deny_delegated",
+        "allowed_delegators",
+        "blocked_delegators",
+    })
     ALLOWED_INTENT_ATTRS = frozenset({"action", "reason", "session_id"})
 
     def __init__(
@@ -116,9 +123,39 @@ class YamlPolicyEvaluator:
         if "agent" in rule:
             for key, expected_val in rule["agent"].items():
                 # Security: Only allow whitelisted attributes
+                if key in self.DELEGATION_KEYS:
+                    continue  # Handled separately below
                 if key not in self.ALLOWED_AGENT_ATTRS:
                     continue
                 if getattr(agent_ctx, key, None) != expected_val:
+                    return False
+
+        # Match delegation constraints (3.4)
+        if "agent" in rule:
+            agent_rule = rule["agent"]
+
+            # deny_delegated: true → block all delegated calls
+            if agent_rule.get("deny_delegated") and agent_ctx.is_delegated:
+                return False
+
+            # max_delegation_depth: N → block if chain is too deep
+            max_depth = agent_rule.get("max_delegation_depth")
+            if max_depth is not None and agent_ctx.delegation_depth > max_depth:
+                return False
+
+            # allowed_delegators: [...] → only delegated agents from these
+            # sources can match this rule. Non-delegated agents are excluded.
+            allowed = agent_rule.get("allowed_delegators")
+            if allowed is not None:
+                if not agent_ctx.is_delegated:
+                    return False  # Non-delegated agents don't match
+                if not any(d in allowed for d in agent_ctx.delegated_by):
+                    return False
+
+            # blocked_delegators: [...] → these agents cannot delegate
+            blocked = agent_rule.get("blocked_delegators")
+            if blocked is not None and agent_ctx.is_delegated:
+                if any(d in blocked for d in agent_ctx.delegated_by):
                     return False
 
         # Match Intent (with attribute whitelist)

@@ -1,3 +1,4 @@
+from .anomaly_detector import AnomalyAlert, AnomalyDetector
 from .approvals import (
     ApprovalStore,
     Approver,
@@ -7,15 +8,24 @@ from .approvals import (
     InMemoryApprovalStore,
     compute_request_hash,
 )
-from .audit import AuditSink, JsonlAuditSink
+from .audit import AuditSink, CompositeAuditSink, JsonlAuditSink, WebhookAuditSink
+from .circuit_breaker import CircuitBreaker, CircuitState, InMemoryCircuitBreaker
+from .context_monitor import ContextIntegrityMonitor, VerificationResult
 from .exceptions import (
     TollgateApprovalDenied,
+    TollgateConstraintViolation,
     TollgateDeferred,
     TollgateDenied,
     TollgateError,
+    TollgateRateLimited,
 )
 from .grants import GrantStore, InMemoryGrantStore
 from .helpers import guard, wrap_tool
+from .manifest_signing import sign_manifest, verify_manifest, get_manifest_hash
+from .network_guard import NetworkGuard
+from .policy_testing import PolicyTestRunner, PolicyTestRunResult
+from .rate_limiter import InMemoryRateLimiter, RateLimiter
+from .verification import make_verifier, sign_agent_context, verify_agent_context
 from .policy import PolicyEvaluator, YamlPolicyEvaluator
 from .registry import ToolRegistry
 from .tower import ControlTower
@@ -33,7 +43,7 @@ from .types import (
     ToolRequest,
 )
 
-__version__ = "1.0.3"
+__version__ = "1.0.5"
 
 __all__ = [
     "ControlTower",
@@ -58,6 +68,8 @@ __all__ = [
     "compute_request_hash",
     "AuditSink",
     "JsonlAuditSink",
+    "CompositeAuditSink",
+    "WebhookAuditSink",
     "ToolRegistry",
     "PolicyEvaluator",
     "YamlPolicyEvaluator",
@@ -66,6 +78,26 @@ __all__ = [
     "TollgateDenied",
     "TollgateApprovalDenied",
     "TollgateDeferred",
+    "TollgateRateLimited",
+    "TollgateConstraintViolation",
+    "RateLimiter",
+    "InMemoryRateLimiter",
+    "CircuitBreaker",
+    "InMemoryCircuitBreaker",
+    "CircuitState",
+    "NetworkGuard",
+    "sign_manifest",
+    "verify_manifest",
+    "get_manifest_hash",
+    "sign_agent_context",
+    "verify_agent_context",
+    "make_verifier",
+    "PolicyTestRunner",
+    "PolicyTestRunResult",
+    "ContextIntegrityMonitor",
+    "VerificationResult",
+    "AnomalyDetector",
+    "AnomalyAlert",
     "wrap_tool",
     "guard",
 ]

@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-02-05 — "Defense in Depth" (Month 3)
+### Added
+- **Multi-Agent Delegation Security**: Extended `AgentContext` with `delegated_by` field to track delegation chains. New properties: `delegation_depth`, `is_delegated`, `root_agent`. Policy rules can now match on `max_delegation_depth`, `deny_delegated`, `allowed_delegators`, `blocked_delegators`.
+- **Policy Testing Framework**: New `PolicyTestRunner` class for declarative scenario-based policy testing. Supports YAML test scenarios with expected decisions, reason matching, and policy ID verification. CI-friendly with `tollgate test-policy` CLI command.
+- **Context Integrity Monitor**: New `ContextIntegrityMonitor` class to detect unauthorized modifications to agent context between turns. Uses SHA-256 checksums with configurable immutable fields.
+- **Anomaly Detection**: New `AnomalyDetector` class implementing the `AuditSink` protocol. Detects rate spikes, error bursts, deny surges, and unusual tool usage using z-score analysis on sliding windows.
+
+### Changed
+- Policy evaluator now supports delegation-aware matching in `agent:` section
+- `__all__` exports updated with all Month 3 components
+
+## [1.3.0] - 2026-02-01 — "Extend the Perimeter" (Month 2)
+### Added
+- **Circuit Breaker Pattern**: New `InMemoryCircuitBreaker` with CLOSED → OPEN → HALF_OPEN state machine. Auto-disables failing tools after configurable threshold. Integrated into `ControlTower`.
+- **Manifest Signing**: New `sign_manifest()`, `verify_manifest()`, and `get_manifest_hash()` functions for HMAC-SHA256 integrity verification. `ToolRegistry` supports `signing_key` parameter.
+- **NetworkGuard**: Global URL policy enforcement with allowlist/blocklist patterns. Checks configurable parameter fields (`url`, `endpoint`, etc.). Supports `default="deny"` or `default="allow"`.
+- **Persistent Backends**: New `tollgate.backends` package with SQLite and Redis stores.
+  - `SQLiteGrantStore` / `SQLiteApprovalStore`: Zero-dependency persistent storage with WAL mode
+  - `RedisGrantStore` / `RedisApprovalStore`: Distributed storage with automatic TTL and pub/sub notifications
+- **Optional Redis Dependency**: Install with `pip install tollgate[redis]`
+
+### Changed
+- `ControlTower` constructor now accepts `circuit_breaker` and `network_guard` parameters
+- All backends implement the existing `GrantStore` and `ApprovalStore` protocols
+
+## [1.2.0] - 2026-01-30 — "Harden the Foundation" (Month 1)
+### Added
+- **Parameter Schema Validation**: `ToolRegistry` now validates tool parameters against JSON Schema defined in `manifest.yaml` under `params_schema`. Supports type, required, pattern, enum, min/max constraints.
+- **Rate Limiting**: New `RateLimiter` protocol and `InMemoryRateLimiter` implementation. Supports per-agent, per-tool, per-effect sliding window limits. New `TollgateRateLimited` exception.
+- **Agent Identity Signing**: New `sign_agent_context()`, `verify_agent_context()`, and `make_verifier()` functions for HMAC-SHA256 agent verification. Signature stored in `metadata["_signature"]`.
+- **URL Constraints**: Per-tool `constraints` section in manifest with `allowed_url_patterns` and `blocked_url_patterns`.
+- **Webhook Alerts**: New `WebhookAuditSink` that fires HTTP POST on BLOCKED/DENIED/FAILED outcomes.
+- **Composite Audit Sink**: New `CompositeAuditSink` to chain multiple audit sinks.
+- **Audit Schema Versioning**: `AuditEvent` now includes `schema_version` field (currently "1.0").
+
+### Changed
+- `ControlTower` constructor now accepts `rate_limiter` and `verify_fn` parameters
+- Audit events include constraint violation details
+
 ## [1.1.0] - 2026-01-28
 ### Added
 - **Session Grants**: Introduced `Grant` and `InMemoryGrantStore` to allow bypassing human approval for specific, pre-authorized actions.

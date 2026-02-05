@@ -1,0 +1,123 @@
+# Policy test scenarios for CI
+# These validate the policy.yaml delegation rules
+#
+# Policy rules (in order):
+#   1. allow_reads       - ALLOW reads for any agent
+#   2. allow_notify      - ALLOW notifications
+#   3. allow_trusted_delegation - ALLOW writes from orchestrator/ci-runner (depth ≤ 2)
+#   4. ask_direct_writes - ASK for non-delegated writes (deny_delegated: true)
+#   5. deny_untrusted_delegation - DENY remaining delegated writes
+#   6. ask_deletes       - ASK for deletes
+#   7. deny_default      - DENY everything else
+
+scenarios:
+  # Test 1: Reads are allowed for any agent
+  - name: "Allow read operations"
+    agent:
+      agent_id: "test-agent"
+      version: "1.0"
+      owner: "test-team"
+    intent:
+      action: "fetch_data"
+      reason: "Testing read access"
+    tool_request:
+      tool: "api:fetch_data"
+      action: "get"
+      resource_type: "data"
+      effect: "read"
+      manifest_version: "1.0.0"
+    expected:
+      decision: "ALLOW"
+      policy_id: "allow_reads"
+
+  # Test 2: Notifications are allowed
+  - name: "Allow notifications"
+    agent:
+      agent_id: "test-agent"
+      version: "1.0"
+      owner: "test-team"
+    tool_request:
+      tool: "api:send_notification"
+      effect: "notify"
+      manifest_version: "1.0.0"
+    expected:
+      decision: "ALLOW"
+      policy_id: "allow_notify"
+
+  # Test 3: Trusted delegator (orchestrator) gets ALLOW for writes
+  - name: "Allow trusted delegation"
+    agent:
+      agent_id: "worker"
+      version: "1.0"
+      owner: "test-team"
+      delegated_by: ["orchestrator"]
+    intent:
+      action: "write_data"
+      reason: "Testing trusted delegator"
+    tool_request:
+      tool: "api:write_file"
+      effect: "write"
+      manifest_version: "1.0.0"
+    expected:
+      decision: "ALLOW"
+      policy_id: "allow_trusted_delegation"
+
+  # Test 4: Direct (non-delegated) writes require approval
+  - name: "Ask for direct writes"
+    agent:
+      agent_id: "direct-agent"
+      version: "1.0"
+      owner: "test-team"
+    intent:
+      action: "write_data"
+      reason: "Testing direct write"
+    tool_request:
+      tool: "api:write_file"
+      effect: "write"
+      manifest_version: "1.0.0"
+    expected:
+      decision: "ASK"
+      policy_id: "ask_direct_writes"
+
+  # Test 5: Untrusted delegator gets DENY for writes
+  - name: "Deny untrusted delegation"
+    agent:
+      agent_id: "worker"
+      version: "1.0"
+      owner: "test-team"
+      delegated_by: ["unknown-agent"]
+    tool_request:
+      tool: "api:write_file"
+      effect: "write"
+      manifest_version: "1.0.0"
+    expected:
+      decision: "DENY"
+      policy_id: "deny_untrusted_delegation"
+
+  # Test 6: Deep delegation chain (depth 3 > max 2) gets DENY
+  - name: "Deny deep delegation chain"
+    agent:
+      agent_id: "sub-agent"
+      version: "1.0"
+      owner: "test-team"
+      delegated_by: ["orchestrator", "router", "worker"]
+    tool_request:
+      tool: "api:write_file"
+      effect: "write"
+      manifest_version: "1.0.0"
+    expected:
+      decision: "DENY"
+      policy_id: "deny_untrusted_delegation"
+      reason_contains: "Untrusted"
+
+  # Test 7: Unknown effects get default DENY
+  - name: "Deny unknown effects"
+    agent:
+      agent_id: "test-agent"
+      version: "1.0"
+      owner: "test-team"
+    tool_request:
+      tool: "api:unknown"
+      effect: "unknown"
+    expected:
+      decision: "DENY"
