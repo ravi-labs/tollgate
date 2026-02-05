@@ -8,8 +8,6 @@ Covers:
 """
 
 import asyncio
-import os
-import tempfile
 import time
 
 import pytest
@@ -37,7 +35,6 @@ from tollgate import (
     sign_manifest,
     verify_manifest,
 )
-
 
 # ─────────────────────────────────────────────────────────────────────
 # Shared fixtures and mocks
@@ -272,7 +269,10 @@ class TestCircuitBreakerTowerIntegration:
         breaker = InMemoryCircuitBreaker(failure_threshold=2, cooldown_seconds=60)
         audit = MockAudit()
         tower = ControlTower(
-            MockPolicy(), MockApprover(), audit, circuit_breaker=breaker,
+            MockPolicy(),
+            MockApprover(),
+            audit,
+            circuit_breaker=breaker,
         )
 
         # Open the circuit manually
@@ -286,11 +286,16 @@ class TestCircuitBreakerTowerIntegration:
         assert len(blocked) == 1
 
     @pytest.mark.asyncio
-    async def test_tower_records_failure_in_circuit_breaker(self, agent_ctx, intent, tool_req):
+    async def test_tower_records_failure_in_circuit_breaker(
+        self, agent_ctx, intent, tool_req
+    ):
         breaker = InMemoryCircuitBreaker(failure_threshold=5, cooldown_seconds=60)
         audit = MockAudit()
         tower = ControlTower(
-            MockPolicy(), MockApprover(), audit, circuit_breaker=breaker,
+            MockPolicy(),
+            MockApprover(),
+            audit,
+            circuit_breaker=breaker,
         )
 
         # Tool execution fails
@@ -304,11 +309,16 @@ class TestCircuitBreakerTowerIntegration:
         assert states[key]["failure_count"] == 1
 
     @pytest.mark.asyncio
-    async def test_tower_records_success_in_circuit_breaker(self, agent_ctx, intent, tool_req):
+    async def test_tower_records_success_in_circuit_breaker(
+        self, agent_ctx, intent, tool_req
+    ):
         breaker = InMemoryCircuitBreaker(failure_threshold=5, cooldown_seconds=60)
         audit = MockAudit()
         tower = ControlTower(
-            MockPolicy(), MockApprover(), audit, circuit_breaker=breaker,
+            MockPolicy(),
+            MockApprover(),
+            audit,
+            circuit_breaker=breaker,
         )
 
         # Pre-record a failure
@@ -322,11 +332,16 @@ class TestCircuitBreakerTowerIntegration:
         assert states[key]["failure_count"] == 0
 
     @pytest.mark.asyncio
-    async def test_tower_circuit_open_after_n_failures(self, agent_ctx, intent, tool_req):
+    async def test_tower_circuit_open_after_n_failures(
+        self, agent_ctx, intent, tool_req
+    ):
         breaker = InMemoryCircuitBreaker(failure_threshold=3, cooldown_seconds=60)
         audit = MockAudit()
         tower = ControlTower(
-            MockPolicy(), MockApprover(), audit, circuit_breaker=breaker,
+            MockPolicy(),
+            MockApprover(),
+            audit,
+            circuit_breaker=breaker,
         )
 
         # Cause 3 failures through the tower
@@ -389,9 +404,9 @@ class TestManifestSigning:
         assert verify_manifest(manifest, secret_key=b"my-secret") is False
 
     def test_verify_fails_missing_manifest(self, tmp_path):
-        assert verify_manifest(
-            tmp_path / "nonexistent.yaml", secret_key=b"key"
-        ) is False
+        assert (
+            verify_manifest(tmp_path / "nonexistent.yaml", secret_key=b"key") is False
+        )
 
     def test_sign_nonexistent_raises(self, tmp_path):
         with pytest.raises(FileNotFoundError):
@@ -423,7 +438,10 @@ class TestManifestSigningRegistryIntegration:
 
     def test_registry_loads_with_valid_signature(self, tmp_path):
         manifest = tmp_path / "manifest.yaml"
-        manifest.write_text("version: '1.0'\ntools:\n  'tool:a':\n    effect: read\n    resource_type: data")
+        manifest.write_text(
+            "version: '1.0'\ntools:\n  'tool:a':\n"
+            "    effect: read\n    resource_type: data"
+        )
 
         sign_manifest(manifest, secret_key=b"build-secret")
 
@@ -433,19 +451,28 @@ class TestManifestSigningRegistryIntegration:
 
     def test_registry_rejects_tampered_manifest(self, tmp_path):
         manifest = tmp_path / "manifest.yaml"
-        manifest.write_text("version: '1.0'\ntools:\n  'tool:a':\n    effect: read\n    resource_type: data")
+        manifest.write_text(
+            "version: '1.0'\ntools:\n  'tool:a':\n"
+            "    effect: read\n    resource_type: data"
+        )
 
         sign_manifest(manifest, secret_key=b"build-secret")
 
         # Tamper
-        manifest.write_text("version: '1.0'\ntools:\n  'tool:evil':\n    effect: write\n    resource_type: secret")
+        manifest.write_text(
+            "version: '1.0'\ntools:\n  'tool:evil':\n"
+            "    effect: write\n    resource_type: secret"
+        )
 
         with pytest.raises(ValueError, match="signature verification failed"):
             ToolRegistry(manifest, signing_key=b"build-secret")
 
     def test_registry_rejects_missing_signature(self, tmp_path):
         manifest = tmp_path / "manifest.yaml"
-        manifest.write_text("version: '1.0'\ntools:\n  'tool:a':\n    effect: read\n    resource_type: data")
+        manifest.write_text(
+            "version: '1.0'\ntools:\n  'tool:a':\n"
+            "    effect: read\n    resource_type: data"
+        )
 
         # No signature file
         with pytest.raises(ValueError, match="signature verification failed"):
@@ -454,7 +481,10 @@ class TestManifestSigningRegistryIntegration:
     def test_registry_loads_without_signing_key(self, tmp_path):
         """If no signing_key is provided, signature check is skipped."""
         manifest = tmp_path / "manifest.yaml"
-        manifest.write_text("version: '1.0'\ntools:\n  'tool:a':\n    effect: read\n    resource_type: data")
+        manifest.write_text(
+            "version: '1.0'\ntools:\n  'tool:a':\n"
+            "    effect: read\n    resource_type: data"
+        )
 
         registry = ToolRegistry(manifest)
         assert registry.version == "1.0"
@@ -580,10 +610,12 @@ class TestNetworkGuard:
             allowlist=[{"pattern": "https://safe.com/*"}],
         )
 
-        violations = guard.check({
-            "source": "https://safe.com/data",
-            "target": "https://evil.com/exfil",
-        })
+        violations = guard.check(
+            {
+                "source": "https://safe.com/data",
+                "target": "https://evil.com/exfil",
+            }
+        )
         assert len(violations) == 1
         assert "target" in violations[0]
 
@@ -599,7 +631,10 @@ class TestNetworkGuardTowerIntegration:
         )
         audit = MockAudit()
         tower = ControlTower(
-            MockPolicy(), MockApprover(), audit, network_guard=guard,
+            MockPolicy(),
+            MockApprover(),
+            audit,
+            network_guard=guard,
         )
 
         tool_req = ToolRequest(
@@ -610,7 +645,9 @@ class TestNetworkGuardTowerIntegration:
             params={"url": "https://evil.com/steal"},
         )
 
-        with pytest.raises(TollgateConstraintViolation, match="Network policy violation"):
+        with pytest.raises(
+            TollgateConstraintViolation, match="Network policy violation"
+        ):
             await tower.execute_async(agent_ctx, intent, tool_req, _noop_async)
 
         blocked = [e for e in audit.events if e.outcome == Outcome.BLOCKED]
@@ -624,7 +661,10 @@ class TestNetworkGuardTowerIntegration:
         )
         audit = MockAudit()
         tower = ControlTower(
-            MockPolicy(), MockApprover(), audit, network_guard=guard,
+            MockPolicy(),
+            MockApprover(),
+            audit,
+            network_guard=guard,
         )
 
         tool_req = ToolRequest(
@@ -647,7 +687,9 @@ class TestNetworkGuardTowerIntegration:
         )
         audit = MockAudit()
         tower = ControlTower(
-            MockPolicy(DecisionType.DENY), MockApprover(), audit,
+            MockPolicy(DecisionType.DENY),
+            MockApprover(),
+            audit,
             network_guard=guard,
         )
 
@@ -674,6 +716,7 @@ class TestSQLiteGrantStore:
     @pytest.fixture
     def store(self, tmp_path):
         from tollgate.backends import SQLiteGrantStore
+
         db = tmp_path / "grants.db"
         return SQLiteGrantStore(str(db))
 
@@ -783,14 +826,24 @@ class TestSQLiteGrantStore:
     @pytest.mark.asyncio
     async def test_list_active_by_agent(self, store):
         g1 = Grant(
-            agent_id="agent-1", effect=Effect.READ, tool=None, action=None,
-            resource_type=None, expires_at=time.time() + 3600,
-            granted_by="admin", created_at=time.time(),
+            agent_id="agent-1",
+            effect=Effect.READ,
+            tool=None,
+            action=None,
+            resource_type=None,
+            expires_at=time.time() + 3600,
+            granted_by="admin",
+            created_at=time.time(),
         )
         g2 = Grant(
-            agent_id="agent-2", effect=Effect.WRITE, tool=None, action=None,
-            resource_type=None, expires_at=time.time() + 3600,
-            granted_by="admin", created_at=time.time(),
+            agent_id="agent-2",
+            effect=Effect.WRITE,
+            tool=None,
+            action=None,
+            resource_type=None,
+            expires_at=time.time() + 3600,
+            granted_by="admin",
+            created_at=time.time(),
         )
         await store.create_grant(g1)
         await store.create_grant(g2)
@@ -802,14 +855,24 @@ class TestSQLiteGrantStore:
     @pytest.mark.asyncio
     async def test_cleanup_expired(self, store):
         expired = Grant(
-            agent_id="agent-1", effect=Effect.READ, tool=None, action=None,
-            resource_type=None, expires_at=time.time() - 10,
-            granted_by="admin", created_at=time.time() - 100,
+            agent_id="agent-1",
+            effect=Effect.READ,
+            tool=None,
+            action=None,
+            resource_type=None,
+            expires_at=time.time() - 10,
+            granted_by="admin",
+            created_at=time.time() - 100,
         )
         active = Grant(
-            agent_id="agent-1", effect=Effect.READ, tool=None, action=None,
-            resource_type=None, expires_at=time.time() + 3600,
-            granted_by="admin", created_at=time.time(),
+            agent_id="agent-1",
+            effect=Effect.READ,
+            tool=None,
+            action=None,
+            resource_type=None,
+            expires_at=time.time() + 3600,
+            granted_by="admin",
+            created_at=time.time(),
         )
         await store.create_grant(expired)
         await store.create_grant(active)
@@ -837,9 +900,14 @@ class TestSQLiteGrantStore:
     @pytest.mark.asyncio
     async def test_prefix_tool_matching(self, store):
         grant = Grant(
-            agent_id="agent-1", effect=None, tool="mcp:*", action=None,
-            resource_type=None, expires_at=time.time() + 3600,
-            granted_by="admin", created_at=time.time(),
+            agent_id="agent-1",
+            effect=None,
+            tool="mcp:*",
+            action=None,
+            resource_type=None,
+            expires_at=time.time() + 3600,
+            granted_by="admin",
+            created_at=time.time(),
         )
         await store.create_grant(grant)
 
@@ -858,12 +926,18 @@ class TestSQLiteGrantStore:
     async def test_memory_mode(self):
         """Test with :memory: database for ephemeral testing."""
         from tollgate.backends import SQLiteGrantStore
+
         store = SQLiteGrantStore(":memory:")
 
         grant = Grant(
-            agent_id="agent-1", effect=Effect.READ, tool="t", action="a",
-            resource_type="r", expires_at=time.time() + 3600,
-            granted_by="admin", created_at=time.time(),
+            agent_id="agent-1",
+            effect=Effect.READ,
+            tool="t",
+            action="a",
+            resource_type="r",
+            expires_at=time.time() + 3600,
+            granted_by="admin",
+            created_at=time.time(),
         )
         grant_id = await store.create_grant(grant)
         assert grant_id == grant.id
@@ -875,6 +949,7 @@ class TestSQLiteApprovalStore:
     @pytest.fixture
     def store(self, tmp_path):
         from tollgate.backends import SQLiteApprovalStore
+
         db = tmp_path / "approvals.db"
         return SQLiteApprovalStore(str(db), poll_interval=0.05)
 
@@ -925,7 +1000,11 @@ class TestSQLiteApprovalStore:
 
         with pytest.raises(ValueError, match="hash mismatch"):
             await store.set_decision(
-                approval_id, ApprovalOutcome.APPROVED, "admin", time.time(), "wrong-hash"
+                approval_id,
+                ApprovalOutcome.APPROVED,
+                "admin",
+                time.time(),
+                "wrong-hash",
             )
 
     @pytest.mark.asyncio
@@ -934,7 +1013,9 @@ class TestSQLiteApprovalStore:
         assert req is None
 
     @pytest.mark.asyncio
-    async def test_wait_for_decision_immediate(self, store, agent_ctx, intent, tool_req):
+    async def test_wait_for_decision_immediate(
+        self, store, agent_ctx, intent, tool_req
+    ):
         """Decision is set before wait — should return immediately."""
         approval_id = await store.create_request(
             agent_ctx, intent, tool_req, "hash123", "reason", time.time() + 3600
@@ -958,7 +1039,9 @@ class TestSQLiteApprovalStore:
         assert outcome == ApprovalOutcome.TIMEOUT
 
     @pytest.mark.asyncio
-    async def test_wait_for_decision_async_set(self, store, agent_ctx, intent, tool_req):
+    async def test_wait_for_decision_async_set(
+        self, store, agent_ctx, intent, tool_req
+    ):
         """Decision set asynchronously while waiting."""
         approval_id = await store.create_request(
             agent_ctx, intent, tool_req, "hash123", "reason", time.time() + 3600
@@ -978,11 +1061,17 @@ class TestSQLiteApprovalStore:
         assert outcome == ApprovalOutcome.DENIED
 
     @pytest.mark.asyncio
-    async def test_wait_expired_request_returns_timeout(self, store, agent_ctx, intent, tool_req):
+    async def test_wait_expired_request_returns_timeout(
+        self, store, agent_ctx, intent, tool_req
+    ):
         """Expired request should return TIMEOUT."""
         approval_id = await store.create_request(
-            agent_ctx, intent, tool_req, "hash123", "reason",
-            time.time() - 1  # Already expired
+            agent_ctx,
+            intent,
+            tool_req,
+            "hash123",
+            "reason",
+            time.time() - 1,  # Already expired
         )
 
         outcome = await store.wait_for_decision(approval_id, timeout=0.5)
@@ -1007,29 +1096,39 @@ class TestMonth2Integration:
         )
         audit = MockAudit()
         tower = ControlTower(
-            MockPolicy(), MockApprover(), audit,
+            MockPolicy(),
+            MockApprover(),
+            audit,
             circuit_breaker=breaker,
             network_guard=guard,
         )
 
         # Allowed URL
         good_req = ToolRequest(
-            tool="fetch", action="get", resource_type="url",
-            effect=Effect.READ, params={"url": "https://api.safe.com/data"},
+            tool="fetch",
+            action="get",
+            resource_type="url",
+            effect=Effect.READ,
+            params={"url": "https://api.safe.com/data"},
         )
         result = await tower.execute_async(agent_ctx, intent, good_req, _noop_async)
         assert result == "ok"
 
         # Blocked URL by network guard
         bad_req = ToolRequest(
-            tool="fetch", action="get", resource_type="url",
-            effect=Effect.READ, params={"url": "https://evil.com/steal"},
+            tool="fetch",
+            action="get",
+            resource_type="url",
+            effect=Effect.READ,
+            params={"url": "https://evil.com/steal"},
         )
         with pytest.raises(TollgateConstraintViolation, match="Network policy"):
             await tower.execute_async(agent_ctx, intent, bad_req, _noop_async)
 
     @pytest.mark.asyncio
-    async def test_signed_manifest_with_network_guard(self, tmp_path, agent_ctx, intent):
+    async def test_signed_manifest_with_network_guard(
+        self, tmp_path, agent_ctx, intent
+    ):
         """Signed manifest + network guard for defense-in-depth."""
         manifest = tmp_path / "manifest.yaml"
         manifest.write_text("""
@@ -1054,15 +1153,20 @@ tools:
         )
         audit = MockAudit()
         tower = ControlTower(
-            MockPolicy(), MockApprover(), audit,
+            MockPolicy(),
+            MockApprover(),
+            audit,
             registry=registry,
             network_guard=guard,
         )
 
         # URL allowed by both manifest constraints AND network guard
         good_req = ToolRequest(
-            tool="api:fetch", action="get", resource_type="url",
-            effect=Effect.READ, params={"url": "https://api.github.com/repos"},
+            tool="api:fetch",
+            action="get",
+            resource_type="url",
+            effect=Effect.READ,
+            params={"url": "https://api.github.com/repos"},
             manifest_version="1.0.0",
         )
         result = await tower.execute_async(agent_ctx, intent, good_req, _noop_async)
@@ -1098,8 +1202,11 @@ tools:
 
         ctx = AgentContext(agent_id="agent-1", version="1.0", owner="test")
         tool_req = ToolRequest(
-            tool="api:fetch", action="get", resource_type="url",
-            effect=Effect.READ, params={},
+            tool="api:fetch",
+            action="get",
+            resource_type="url",
+            effect=Effect.READ,
+            params={},
         )
 
         # Should match the grant and skip approval

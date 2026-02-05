@@ -30,7 +30,7 @@ import logging
 import math
 import time
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from .types import AuditEvent, Outcome

@@ -98,22 +98,21 @@ class ControlTower:
         request_hash = compute_request_hash(agent_ctx, intent, tool_request)
 
         # 0. Verify agent identity (roadmap 1.6)
-        if self.verify_fn is not None:
-            if not self.verify_fn(agent_ctx):
-                decision = Decision(
-                    decision=DecisionType.DENY,
-                    reason="Agent identity verification failed.",
-                )
-                self._log(
-                    correlation_id,
-                    request_hash,
-                    agent_ctx,
-                    intent,
-                    tool_request,
-                    decision,
-                    Outcome.BLOCKED,
-                )
-                raise TollgateDenied("Agent identity verification failed.")
+        if self.verify_fn is not None and not self.verify_fn(agent_ctx):
+            decision = Decision(
+                decision=DecisionType.DENY,
+                reason="Agent identity verification failed.",
+            )
+            self._log(
+                correlation_id,
+                request_hash,
+                agent_ctx,
+                intent,
+                tool_request,
+                decision,
+                Outcome.BLOCKED,
+            )
+            raise TollgateDenied("Agent identity verification failed.")
 
         # 0.5. Check circuit breaker (roadmap 2.1)
         if self.circuit_breaker is not None:
@@ -155,23 +154,16 @@ class ControlTower:
                     decision,
                     Outcome.BLOCKED,
                 )
-                raise TollgateRateLimited(
-                    reason or "Rate limit exceeded.", retry_after
-                )
+                raise TollgateRateLimited(reason or "Rate limit exceeded.", retry_after)
 
         # 2. Evaluate Policy
         decision = self.policy.evaluate(agent_ctx, intent, tool_request)
 
         # 2.5. Check global network policy (roadmap 2.3)
-        if (
-            decision.decision != DecisionType.DENY
-            and self.network_guard is not None
-        ):
+        if decision.decision != DecisionType.DENY and self.network_guard is not None:
             net_violations = self.network_guard.check(tool_request.params)
             if net_violations:
-                deny_reason = (
-                    f"Network policy violation: {'; '.join(net_violations)}"
-                )
+                deny_reason = f"Network policy violation: {'; '.join(net_violations)}"
                 decision = Decision(
                     decision=DecisionType.DENY,
                     reason=deny_reason,
@@ -188,17 +180,12 @@ class ControlTower:
                 raise TollgateConstraintViolation(deny_reason)
 
         # 3. Validate parameters against schema (roadmap 1.1)
-        if (
-            decision.decision != DecisionType.DENY
-            and self.registry is not None
-        ):
+        if decision.decision != DecisionType.DENY and self.registry is not None:
             schema_errors = self.registry.validate_params(
                 tool_request.tool, tool_request.params
             )
             if schema_errors:
-                deny_reason = (
-                    f"Parameter validation failed: {'; '.join(schema_errors)}"
-                )
+                deny_reason = f"Parameter validation failed: {'; '.join(schema_errors)}"
                 decision = Decision(
                     decision=DecisionType.DENY,
                     reason=deny_reason,
@@ -258,7 +245,7 @@ class ControlTower:
                     agent_ctx, tool_request
                 )
                 if matching_grant:
-                    result = await self._execute_and_log(
+                    return await self._execute_and_log(
                         correlation_id,
                         request_hash,
                         agent_ctx,
@@ -268,7 +255,6 @@ class ControlTower:
                         exec_async,
                         grant_id=matching_grant.id,
                     )
-                    return result
 
             # 5.2 Request Approval if no grant found
             outcome = await self.approver.request_approval_async(
@@ -395,9 +381,7 @@ class ControlTower:
         async def _exec():
             return exec_sync()
 
-        return asyncio.run(
-            self.execute_async(agent_ctx, intent, tool_request, _exec)
-        )
+        return asyncio.run(self.execute_async(agent_ctx, intent, tool_request, _exec))
 
     def _log(
         self,

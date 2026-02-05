@@ -222,7 +222,9 @@ class ContextIntegrityMonitor:
         for field_name in snap.field_checksums:
             if field_name not in current_field_checksums:
                 removed_fields.append(field_name)
-            elif current_field_checksums[field_name] != snap.field_checksums[field_name]:
+            elif (
+                current_field_checksums[field_name] != snap.field_checksums[field_name]
+            ):
                 changed_fields.append(field_name)
 
         # Check added fields
@@ -233,9 +235,7 @@ class ContextIntegrityMonitor:
         # Determine if immutable fields were violated
         immutable_violations = [
             f for f in changed_fields if f in self._immutable_fields
-        ] + [
-            f for f in removed_fields if f in self._immutable_fields
-        ]
+        ] + [f for f in removed_fields if f in self._immutable_fields]
 
         is_valid = len(immutable_violations) == 0
 
@@ -271,7 +271,9 @@ class ContextIntegrityMonitor:
         if not is_valid:
             logger.warning(
                 "Context integrity violation for agent=%s turn=%s: %s",
-                agent_id, turn_id, message,
+                agent_id,
+                turn_id,
+                message,
             )
 
         return result

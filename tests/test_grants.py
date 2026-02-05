@@ -1,4 +1,3 @@
-import asyncio
 import time
 
 import pytest
@@ -284,6 +283,7 @@ async def test_tower_uses_grant(agent_ctx, tool_req):
     event = audit.events[-1]
     assert event.grant_id == grant.id
     assert event.outcome == Outcome.EXECUTED
+
 
 @pytest.mark.asyncio
 async def test_grant_store_protocol_compliance():

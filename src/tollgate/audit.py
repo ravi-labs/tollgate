@@ -116,9 +116,7 @@ class WebhookAuditSink:
             return  # Not an alertable event — skip silently
 
         # Fire-and-forget on a daemon thread to avoid blocking execution
-        thread = threading.Thread(
-            target=self._send, args=(event,), daemon=True
-        )
+        thread = threading.Thread(target=self._send, args=(event,), daemon=True)
         thread.start()
 
     def _send(self, event: AuditEvent) -> None:

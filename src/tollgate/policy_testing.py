@@ -263,10 +263,7 @@ class PolicyTestRunner:
     @staticmethod
     def _build_agent_context(data: dict[str, Any]) -> AgentContext:
         delegated_by = data.get("delegated_by")
-        if delegated_by is not None:
-            delegated_by = tuple(delegated_by)
-        else:
-            delegated_by = ()
+        delegated_by = tuple(delegated_by) if delegated_by is not None else ()
         return AgentContext(
             agent_id=data.get("agent_id", "test-agent"),
             version=data.get("version", "1.0"),
@@ -323,7 +320,8 @@ def cli_main(args: list[str] | None = None) -> int:
         help="Path to the policy YAML file",
     )
     parser.add_argument(
-        "--scenarios", "-s",
+        "--scenarios",
+        "-s",
         required=True,
         help="Path to the test scenarios YAML file",
     )
@@ -333,7 +331,8 @@ def cli_main(args: list[str] | None = None) -> int:
         help="Exit with code 1 on any failure (default behavior)",
     )
     parser.add_argument(
-        "--quiet", "-q",
+        "--quiet",
+        "-q",
         action="store_true",
         help="Only show failures and summary",
     )

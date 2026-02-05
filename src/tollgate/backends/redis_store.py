@@ -26,11 +26,11 @@ from typing import Any
 
 try:
     import redis.asyncio as aioredis
-except ImportError:
+except ImportError as err:
     raise ImportError(
         "Redis backend requires the 'redis' package. "
         "Install it with: pip install redis[hiredis]"
-    )
+    ) from err
 
 from ..types import AgentContext, ApprovalOutcome, Effect, Grant, ToolRequest
 
@@ -323,11 +323,14 @@ class RedisApprovalStore:
             )
 
         pipe = self._redis.pipeline()
-        pipe.hset(key, mapping={
-            "outcome": outcome.value,
-            "decided_by": decided_by,
-            "decided_at": str(decided_at),
-        })
+        pipe.hset(
+            key,
+            mapping={
+                "outcome": outcome.value,
+                "decided_by": decided_by,
+                "decided_at": str(decided_at),
+            },
+        )
         # Publish notification for waiters
         pipe.publish(self._channel_key(approval_id), outcome.value)
         await pipe.execute()
@@ -382,9 +385,7 @@ class RedisApprovalStore:
 
                 try:
                     message = await asyncio.wait_for(
-                        pubsub.get_message(
-                            ignore_subscribe_messages=True, timeout=1.0
-                        ),
+                        pubsub.get_message(ignore_subscribe_messages=True, timeout=1.0),
                         timeout=min(remaining, 2.0),
                     )
                 except asyncio.TimeoutError:

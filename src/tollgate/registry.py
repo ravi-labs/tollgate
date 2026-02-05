@@ -94,9 +94,7 @@ class ToolRegistry:
             return None
         return meta.get("params_schema")
 
-    def validate_params(
-        self, tool_key: str, params: dict[str, Any]
-    ) -> list[str]:
+    def validate_params(self, tool_key: str, params: dict[str, Any]) -> list[str]:
         """Validate tool parameters against the manifest schema.
 
         Returns a list of validation error strings.  An empty list means
@@ -129,7 +127,9 @@ class ToolRegistry:
         if "type" in schema:
             expected = schema["type"]
             if not self._type_matches(value, expected):
-                errors.append(f"{path}: expected type '{expected}', got {type(value).__name__}")
+                errors.append(
+                    f"{path}: expected type '{expected}', got {type(value).__name__}"
+                )
                 return errors  # No point checking further if type is wrong
 
         # --- enum ---
@@ -139,11 +139,17 @@ class ToolRegistry:
         # --- string constraints ---
         if isinstance(value, str):
             if "minLength" in schema and len(value) < schema["minLength"]:
-                errors.append(f"{path}: length {len(value)} < minLength {schema['minLength']}")
+                errors.append(
+                    f"{path}: length {len(value)} < minLength {schema['minLength']}"
+                )
             if "maxLength" in schema and len(value) > schema["maxLength"]:
-                errors.append(f"{path}: length {len(value)} > maxLength {schema['maxLength']}")
+                errors.append(
+                    f"{path}: length {len(value)} > maxLength {schema['maxLength']}"
+                )
             if "pattern" in schema and not re.search(schema["pattern"], value):
-                errors.append(f"{path}: value does not match pattern '{schema['pattern']}'")
+                errors.append(
+                    f"{path}: value does not match pattern '{schema['pattern']}'"
+                )
 
         # --- numeric constraints ---
         if isinstance(value, (int, float)) and not isinstance(value, bool):
@@ -208,9 +214,7 @@ class ToolRegistry:
             return None
         return meta.get("constraints")
 
-    def check_constraints(
-        self, tool_key: str, params: dict[str, Any]
-    ) -> list[str]:
+    def check_constraints(self, tool_key: str, params: dict[str, Any]) -> list[str]:
         """Check tool parameters against manifest constraints.
 
         Currently supports:
@@ -249,14 +253,13 @@ class ToolRegistry:
                                 )
 
                     # Check allowed (only if allowlist is defined)
-                    if allowed_urls:
-                        if not any(
-                            fnmatch.fnmatch(param_val, p) for p in allowed_urls
-                        ):
-                            violations.append(
-                                f"Parameter '{param_key}': URL '{param_val}' "
-                                f"does not match any allowed URL pattern"
-                            )
+                    if allowed_urls and not any(
+                        fnmatch.fnmatch(param_val, p) for p in allowed_urls
+                    ):
+                        violations.append(
+                            f"Parameter '{param_key}': URL '{param_val}' "
+                            f"does not match any allowed URL pattern"
+                        )
 
         # --- Per-parameter constraints ---
         param_constraints = constraints.get("param_constraints")
@@ -271,11 +274,14 @@ class ToolRegistry:
                         f"Parameter '{param_key}': value {val!r} "
                         f"not in allowed_values {pc['allowed_values']}"
                     )
-                if "pattern" in pc and isinstance(val, str):
-                    if not re.search(pc["pattern"], val):
-                        violations.append(
-                            f"Parameter '{param_key}': value does not match "
-                            f"pattern '{pc['pattern']}'"
-                        )
+                if (
+                    "pattern" in pc
+                    and isinstance(val, str)
+                    and not re.search(pc["pattern"], val)
+                ):
+                    violations.append(
+                        f"Parameter '{param_key}': value does not match "
+                        f"pattern '{pc['pattern']}'"
+                    )
 
         return violations

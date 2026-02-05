@@ -23,12 +23,14 @@ class YamlPolicyEvaluator:
     # Security: Whitelist of allowed attributes for agent_ctx and intent matching
     ALLOWED_AGENT_ATTRS = frozenset({"agent_id", "version", "environment", "role"})
     # Delegation-aware matching keys (checked separately from ALLOWED_AGENT_ATTRS)
-    DELEGATION_KEYS = frozenset({
-        "max_delegation_depth",
-        "deny_delegated",
-        "allowed_delegators",
-        "blocked_delegators",
-    })
+    DELEGATION_KEYS = frozenset(
+        {
+            "max_delegation_depth",
+            "deny_delegated",
+            "allowed_delegators",
+            "blocked_delegators",
+        }
+    )
     ALLOWED_INTENT_ATTRS = frozenset({"action", "reason", "session_id"})
 
     def __init__(
@@ -154,9 +156,12 @@ class YamlPolicyEvaluator:
 
             # blocked_delegators: [...] → these agents cannot delegate
             blocked = agent_rule.get("blocked_delegators")
-            if blocked is not None and agent_ctx.is_delegated:
-                if any(d in blocked for d in agent_ctx.delegated_by):
-                    return False
+            if (
+                blocked is not None
+                and agent_ctx.is_delegated
+                and any(d in blocked for d in agent_ctx.delegated_by)
+            ):
+                return False
 
         # Match Intent (with attribute whitelist)
         if "intent" in rule:

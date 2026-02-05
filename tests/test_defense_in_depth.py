@@ -25,13 +25,9 @@ from tollgate import (
     Intent,
     Outcome,
     PolicyTestRunner,
-    PolicyTestRunResult,
-    TollgateDenied,
     ToolRequest,
-    VerificationResult,
     YamlPolicyEvaluator,
 )
-
 
 # ─────────────────────────────────────────────────────────────────────
 # Shared fixtures and mocks
@@ -151,7 +147,9 @@ class TestDelegationPolicyMatching:
         return YamlPolicyEvaluator(policy_file)
 
     def test_deny_delegated_blocks_delegated_agent(self, tmp_path):
-        policy = self._make_policy(tmp_path, """
+        policy = self._make_policy(
+            tmp_path,
+            """
   - id: deny_delegated_writes
     effect: write
     decision: DENY
@@ -161,37 +159,49 @@ class TestDelegationPolicyMatching:
   - id: allow_all
     decision: ALLOW
     reason: "Default allow"
-""")
+""",
+        )
         delegated_ctx = AgentContext(
-            agent_id="sub-agent", version="1.0", owner="team-a",
+            agent_id="sub-agent",
+            version="1.0",
+            owner="team-a",
             delegated_by=("orchestrator",),
         )
-        direct_ctx = AgentContext(
-            agent_id="direct-agent", version="1.0", owner="team-a",
+        AgentContext(
+            agent_id="direct-agent",
+            version="1.0",
+            owner="team-a",
         )
         intent = Intent(action="write", reason="test")
         write_req = ToolRequest(
-            tool="db:write", action="insert", resource_type="database",
-            effect=Effect.WRITE, params={}, manifest_version="1.0",
+            tool="db:write",
+            action="insert",
+            resource_type="database",
+            effect=Effect.WRITE,
+            params={},
+            manifest_version="1.0",
         )
 
         # Delegated agent should be blocked (rule doesn't match → falls through)
-        decision = policy.evaluate(delegated_ctx, intent, write_req)
+        policy.evaluate(delegated_ctx, intent, write_req)
         # The deny_delegated rule should NOT match because the delegated agent
         # is blocked from this rule, falling through to allow_all
         # Actually: deny_delegated: true means the rule's _matches returns False
         # for delegated agents, so it skips to allow_all
         # Wait — the intent of deny_delegated is to deny delegated agents.
         # Let me re-read the implementation...
-        # deny_delegated: true in agent rule means "if agent is delegated, this rule doesn't match"
-        # That's wrong — we want it to be a deny rule that only matches delegated agents.
-        # The correct approach: deny_delegated is a filter, if agent IS delegated and
-        # deny_delegated is True, the _matches returns False — meaning the DENY rule
-        # does NOT apply to delegated agents. That's backwards.
+        # deny_delegated: true in agent rule means "if agent is delegated,
+        # this rule doesn't match". That's wrong — we want it to be a deny
+        # rule that only matches delegated agents.
+        # The correct approach: deny_delegated is a filter, if agent IS
+        # delegated and deny_delegated is True, the _matches returns False
+        # — meaning the DENY rule does NOT apply to delegated agents.
+        # That's backwards.
         # We need to fix the logic or test the correct behavior.
-        # Actually looking at the code: if deny_delegated AND is_delegated → return False
-        # This means the rule does NOT match for delegated agents.
-        # So for a DENY rule with deny_delegated, it will NOT deny delegated agents.
+        # Actually looking at the code: if deny_delegated AND
+        # is_delegated → return False. This means the rule does NOT match
+        # for delegated agents. So for a DENY rule with deny_delegated,
+        # it will NOT deny delegated agents.
         # That's the opposite of what we want.
 
         # Let me test the actual behavior: the rule with deny_delegated: true
@@ -202,7 +212,9 @@ class TestDelegationPolicyMatching:
         pass  # Skip this, test the correct semantics below
 
     def test_max_delegation_depth(self, tmp_path):
-        policy = self._make_policy(tmp_path, """
+        policy = self._make_policy(
+            tmp_path,
+            """
   - id: allow_shallow
     effect: read
     decision: ALLOW
@@ -212,16 +224,23 @@ class TestDelegationPolicyMatching:
   - id: deny_deep
     decision: DENY
     reason: "Delegation too deep"
-""")
+""",
+        )
         intent = Intent(action="read", reason="test")
         req = ToolRequest(
-            tool="api:fetch", action="get", resource_type="url",
-            effect=Effect.READ, params={}, manifest_version="1.0",
+            tool="api:fetch",
+            action="get",
+            resource_type="url",
+            effect=Effect.READ,
+            params={},
+            manifest_version="1.0",
         )
 
         # Depth 1 — within limit
         shallow_ctx = AgentContext(
-            agent_id="agent", version="1.0", owner="team-a",
+            agent_id="agent",
+            version="1.0",
+            owner="team-a",
             delegated_by=("parent",),
         )
         decision = policy.evaluate(shallow_ctx, intent, req)
@@ -229,14 +248,18 @@ class TestDelegationPolicyMatching:
 
         # Depth 3 — exceeds max of 2
         deep_ctx = AgentContext(
-            agent_id="agent", version="1.0", owner="team-a",
+            agent_id="agent",
+            version="1.0",
+            owner="team-a",
             delegated_by=("root", "mid", "sub"),
         )
         decision = policy.evaluate(deep_ctx, intent, req)
         assert decision.decision == DecisionType.DENY
 
     def test_allowed_delegators(self, tmp_path):
-        policy = self._make_policy(tmp_path, """
+        policy = self._make_policy(
+            tmp_path,
+            """
   - id: allow_trusted_delegation
     effect: write
     decision: ALLOW
@@ -248,16 +271,23 @@ class TestDelegationPolicyMatching:
   - id: deny_default
     decision: DENY
     reason: "Default deny"
-""")
+""",
+        )
         intent = Intent(action="write", reason="test")
         req = ToolRequest(
-            tool="db:write", action="insert", resource_type="database",
-            effect=Effect.WRITE, params={}, manifest_version="1.0",
+            tool="db:write",
+            action="insert",
+            resource_type="database",
+            effect=Effect.WRITE,
+            params={},
+            manifest_version="1.0",
         )
 
         # Trusted delegator
         trusted_ctx = AgentContext(
-            agent_id="worker", version="1.0", owner="team-a",
+            agent_id="worker",
+            version="1.0",
+            owner="team-a",
             delegated_by=("trusted-orchestrator",),
         )
         decision = policy.evaluate(trusted_ctx, intent, req)
@@ -265,14 +295,18 @@ class TestDelegationPolicyMatching:
 
         # Untrusted delegator
         untrusted_ctx = AgentContext(
-            agent_id="worker", version="1.0", owner="team-a",
+            agent_id="worker",
+            version="1.0",
+            owner="team-a",
             delegated_by=("rogue-agent",),
         )
         decision = policy.evaluate(untrusted_ctx, intent, req)
         assert decision.decision == DecisionType.DENY
 
     def test_blocked_delegators(self, tmp_path):
-        policy = self._make_policy(tmp_path, """
+        policy = self._make_policy(
+            tmp_path,
+            """
   - id: allow_writes
     effect: write
     decision: ALLOW
@@ -283,16 +317,23 @@ class TestDelegationPolicyMatching:
   - id: deny_default
     decision: DENY
     reason: "Default deny"
-""")
+""",
+        )
         intent = Intent(action="write", reason="test")
         req = ToolRequest(
-            tool="db:write", action="insert", resource_type="database",
-            effect=Effect.WRITE, params={}, manifest_version="1.0",
+            tool="db:write",
+            action="insert",
+            resource_type="database",
+            effect=Effect.WRITE,
+            params={},
+            manifest_version="1.0",
         )
 
         # Non-blocked delegator
         ok_ctx = AgentContext(
-            agent_id="worker", version="1.0", owner="team-a",
+            agent_id="worker",
+            version="1.0",
+            owner="team-a",
             delegated_by=("safe-agent",),
         )
         decision = policy.evaluate(ok_ctx, intent, req)
@@ -300,7 +341,9 @@ class TestDelegationPolicyMatching:
 
         # Blocked delegator in chain
         blocked_ctx = AgentContext(
-            agent_id="worker", version="1.0", owner="team-a",
+            agent_id="worker",
+            version="1.0",
+            owner="team-a",
             delegated_by=("compromised-agent",),
         )
         decision = policy.evaluate(blocked_ctx, intent, req)
@@ -310,7 +353,9 @@ class TestDelegationPolicyMatching:
         """allowed_delegators requires the agent to be delegated. Direct agents
         should NOT match a rule with allowed_delegators, ensuring such rules
         only apply to explicitly delegated contexts."""
-        policy = self._make_policy(tmp_path, """
+        policy = self._make_policy(
+            tmp_path,
+            """
   - id: allow_trusted_delegated_writes
     effect: write
     decision: ALLOW
@@ -325,17 +370,24 @@ class TestDelegationPolicyMatching:
   - id: deny_default
     decision: DENY
     reason: "Default deny"
-""")
+""",
+        )
         intent = Intent(action="write", reason="test")
         req = ToolRequest(
-            tool="db:write", action="insert", resource_type="database",
-            effect=Effect.WRITE, params={}, manifest_version="1.0",
+            tool="db:write",
+            action="insert",
+            resource_type="database",
+            effect=Effect.WRITE,
+            params={},
+            manifest_version="1.0",
         )
 
         # Direct agent (not delegated) — should NOT match allowed_delegators
         # rule, and instead fall through to the next matching rule
         direct_ctx = AgentContext(
-            agent_id="direct-agent", version="1.0", owner="team-a",
+            agent_id="direct-agent",
+            version="1.0",
+            owner="team-a",
         )
         decision = policy.evaluate(direct_ctx, intent, req)
         assert decision.decision == DecisionType.ALLOW
@@ -343,7 +395,9 @@ class TestDelegationPolicyMatching:
 
         # Trusted delegated agent SHOULD match allowed_delegators rule
         delegated_ctx = AgentContext(
-            agent_id="worker", version="1.0", owner="team-a",
+            agent_id="worker",
+            version="1.0",
+            owner="team-a",
             delegated_by=("trusted-orchestrator",),
         )
         decision = policy.evaluate(delegated_ctx, intent, req)
@@ -352,7 +406,9 @@ class TestDelegationPolicyMatching:
 
         # Untrusted delegated agent should NOT match allowed_delegators
         untrusted_ctx = AgentContext(
-            agent_id="worker", version="1.0", owner="team-a",
+            agent_id="worker",
+            version="1.0",
+            owner="team-a",
             delegated_by=("unknown-agent",),
         )
         decision = policy.evaluate(untrusted_ctx, intent, req)
@@ -366,7 +422,9 @@ class TestDelegationPolicyMatching:
         tower = ControlTower(MockPolicy(), MockApprover(), audit)
 
         delegated_ctx = AgentContext(
-            agent_id="sub-agent", version="1.0", owner="team-a",
+            agent_id="sub-agent",
+            version="1.0",
+            owner="team-a",
             delegated_by=("orchestrator",),
         )
 
@@ -714,10 +772,16 @@ class TestPolicyTestCLI:
         from tollgate.policy_testing import cli_main
 
         policy_file = tmp_path / "policy.yaml"
-        policy_file.write_text("version: '1.0'\nrules:\n  - id: deny\n    decision: DENY\n    reason: denied")
+        policy_content = (
+            "version: '1.0'\nrules:\n"
+            "  - id: deny\n    decision: DENY\n    reason: denied"
+        )
+        policy_file.write_text(policy_content)
 
         scenarios_file = tmp_path / "scenarios.yaml"
-        scenarios_file.write_text("scenarios:\n  - name: test\n    expected:\n      decision: DENY")
+        scenarios_file.write_text(
+            "scenarios:\n  - name: test\n    expected:\n      decision: DENY"
+        )
 
         exit_code = cli_main([str(policy_file), "-s", str(scenarios_file)])
         assert exit_code == 0
@@ -726,10 +790,16 @@ class TestPolicyTestCLI:
         from tollgate.policy_testing import cli_main
 
         policy_file = tmp_path / "policy.yaml"
-        policy_file.write_text("version: '1.0'\nrules:\n  - id: deny\n    decision: DENY\n    reason: denied")
+        policy_content = (
+            "version: '1.0'\nrules:\n"
+            "  - id: deny\n    decision: DENY\n    reason: denied"
+        )
+        policy_file.write_text(policy_content)
 
         scenarios_file = tmp_path / "scenarios.yaml"
-        scenarios_file.write_text("scenarios:\n  - name: wrong\n    expected:\n      decision: ALLOW")
+        scenarios_file.write_text(
+            "scenarios:\n  - name: wrong\n    expected:\n      decision: ALLOW"
+        )
 
         exit_code = cli_main([str(policy_file), "-s", str(scenarios_file)])
         assert exit_code == 1
@@ -737,7 +807,9 @@ class TestPolicyTestCLI:
     def test_cli_missing_file(self, tmp_path):
         from tollgate.policy_testing import cli_main
 
-        exit_code = cli_main([str(tmp_path / "nope.yaml"), "-s", str(tmp_path / "nope2.yaml")])
+        exit_code = cli_main(
+            [str(tmp_path / "nope.yaml"), "-s", str(tmp_path / "nope2.yaml")]
+        )
         assert exit_code == 2
 
 
@@ -859,15 +931,23 @@ class TestContextIntegrityMonitor:
             immutable_fields={"custom_field", "system_prompt"}
         )
 
-        monitor.snapshot("agent-1", "turn-1", {
-            "custom_field": "original",
-            "mutable_field": "can change",
-        })
+        monitor.snapshot(
+            "agent-1",
+            "turn-1",
+            {
+                "custom_field": "original",
+                "mutable_field": "can change",
+            },
+        )
 
-        result = monitor.verify("agent-1", "turn-1", {
-            "custom_field": "tampered",
-            "mutable_field": "changed",
-        })
+        result = monitor.verify(
+            "agent-1",
+            "turn-1",
+            {
+                "custom_field": "tampered",
+                "mutable_field": "changed",
+            },
+        )
 
         assert result.is_valid is False
         assert "custom_field" in result.changed_fields
@@ -927,8 +1007,11 @@ class TestAnomalyDetector:
             agent=AgentContext(agent_id=agent_id, version="1.0", owner="test"),
             intent=Intent(action="test", reason="test"),
             tool_request=ToolRequest(
-                tool=tool, action="run", resource_type="data",
-                effect=Effect.READ, params={},
+                tool=tool,
+                action="run",
+                resource_type="data",
+                effect=Effect.READ,
+                params={},
             ),
             decision=Decision(decision=DecisionType.ALLOW, reason="test"),
             outcome=outcome,
@@ -1063,7 +1146,9 @@ class TestMonth3Integration:
         tower = ControlTower(MockPolicy(), MockApprover(), audit)
 
         delegated_ctx = AgentContext(
-            agent_id="sub-agent", version="1.0", owner="team-a",
+            agent_id="sub-agent",
+            version="1.0",
+            owner="team-a",
             delegated_by=("orchestrator",),
         )
 
@@ -1132,8 +1217,11 @@ rules:
                 agent=AgentContext(agent_id="agent-1", version="1.0", owner="test"),
                 intent=Intent(action="test", reason="test"),
                 tool_request=ToolRequest(
-                    tool=tool, action="run", resource_type="data",
-                    effect=Effect.READ, params={},
+                    tool=tool,
+                    action="run",
+                    resource_type="data",
+                    effect=Effect.READ,
+                    params={},
                 ),
                 decision=Decision(decision=DecisionType.ALLOW, reason="test"),
                 outcome=Outcome.EXECUTED,

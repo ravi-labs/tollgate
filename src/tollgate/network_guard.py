@@ -53,9 +53,15 @@ class NetworkGuard:
             raise ValueError(f"default must be 'deny' or 'allow', got '{default}'")
 
         self.default = default
-        self._allow_patterns = [e["pattern"] for e in (allowlist or []) if "pattern" in e]
-        self._block_patterns = [e["pattern"] for e in (blocklist or []) if "pattern" in e]
-        self._param_fields = set(param_fields_to_check) if param_fields_to_check else None
+        self._allow_patterns = [
+            e["pattern"] for e in (allowlist or []) if "pattern" in e
+        ]
+        self._block_patterns = [
+            e["pattern"] for e in (blocklist or []) if "pattern" in e
+        ]
+        self._param_fields = (
+            set(param_fields_to_check) if param_fields_to_check else None
+        )
 
     @classmethod
     def from_config(cls, config: dict[str, Any]) -> "NetworkGuard":

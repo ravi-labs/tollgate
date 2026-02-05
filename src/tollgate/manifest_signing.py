@@ -34,9 +34,7 @@ def _compute_hmac(content: bytes, secret_key: bytes) -> str:
     return hmac.new(secret_key, content, hashlib.sha256).hexdigest()
 
 
-def sign_manifest(
-    manifest_path: str | Path, *, secret_key: bytes
-) -> Path:
+def sign_manifest(manifest_path: str | Path, *, secret_key: bytes) -> Path:
     """Sign a manifest file, writing the signature to ``<path>.sig``.
 
     Args:
@@ -58,9 +56,7 @@ def sign_manifest(
     return sig_path
 
 
-def verify_manifest(
-    manifest_path: str | Path, *, secret_key: bytes
-) -> bool:
+def verify_manifest(manifest_path: str | Path, *, secret_key: bytes) -> bool:
     """Verify a manifest file against its ``.sig`` signature file.
 
     Args:

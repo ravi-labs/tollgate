@@ -51,9 +51,7 @@ class RateLimitRule:
         self.max_calls = max_calls
         self.window_seconds = window_seconds
 
-    def matches(
-        self, agent_ctx: AgentContext, tool_request: ToolRequest
-    ) -> bool:
+    def matches(self, agent_ctx: AgentContext, tool_request: ToolRequest) -> bool:
         """Check if this rule applies to the given request."""
         # Agent match
         if self.agent_id != "*" and self.agent_id != agent_ctx.agent_id:

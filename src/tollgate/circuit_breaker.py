@@ -95,9 +95,7 @@ class InMemoryCircuitBreaker:
     def _key(tool: str, action: str) -> str:
         return f"{tool}:{action}"
 
-    async def before_call(
-        self, tool: str, action: str
-    ) -> tuple[bool, str | None]:
+    async def before_call(self, tool: str, action: str) -> tuple[bool, str | None]:
         """Check if the circuit allows a call through."""
         now = time.time()
         key = self._key(tool, action)
@@ -118,13 +116,12 @@ class InMemoryCircuitBreaker:
                     entry.state = CircuitState.HALF_OPEN
                     entry.failure_count = 0
                     return True, None
-                else:
-                    remaining = self.cooldown_seconds - elapsed
-                    return False, (
-                        f"Circuit OPEN for {tool}.{action}: "
-                        f"{remaining:.1f}s remaining in cooldown "
-                        f"(opened after {self.failure_threshold} consecutive failures)"
-                    )
+                remaining = self.cooldown_seconds - elapsed
+                return False, (
+                    f"Circuit OPEN for {tool}.{action}: "
+                    f"{remaining:.1f}s remaining in cooldown "
+                    f"(opened after {self.failure_threshold} consecutive failures)"
+                )
 
             if entry.state == CircuitState.HALF_OPEN:
                 # Allow the probe call through

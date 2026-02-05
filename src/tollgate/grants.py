@@ -22,32 +22,29 @@ class GrantStore(Protocol):
                 await self.redis.expireat(f"grant:{grant.id}", int(grant.expires_at))
                 return grant.id
 
-            async def find_matching_grant(self, agent_ctx, tool_request) -> Grant | None:
+            async def find_matching_grant(
+                self, agent_ctx, tool_request
+            ) -> Grant | None:
                 # Implement matching logic with Redis SCAN or secondary indexes
                 ...
 
-    All methods must be async. The InMemoryGrantStore serves as the reference implementation.
+    All methods must be async. The InMemoryGrantStore serves as
+    the reference implementation.
     """
 
-    async def create_grant(self, grant: Grant) -> str:
-        ...
+    async def create_grant(self, grant: Grant) -> str: ...
 
     async def find_matching_grant(
         self, agent_ctx: AgentContext, tool_request: ToolRequest
-    ) -> Grant | None:
-        ...
+    ) -> Grant | None: ...
 
-    async def revoke_grant(self, grant_id: str) -> bool:
-        ...
+    async def revoke_grant(self, grant_id: str) -> bool: ...
 
-    async def list_active_grants(self, agent_id: str | None = None) -> list[Grant]:
-        ...
+    async def list_active_grants(self, agent_id: str | None = None) -> list[Grant]: ...
 
-    async def cleanup_expired(self) -> int:
-        ...
+    async def cleanup_expired(self) -> int: ...
 
-    async def get_usage_count(self, grant_id: str) -> int:
-        ...
+    async def get_usage_count(self, grant_id: str) -> int: ...
 
 
 class InMemoryGrantStore:
@@ -130,18 +127,17 @@ class InMemoryGrantStore:
         async with self._lock:
             active = []
             for grant in self._grants.values():
-                if grant.expires_at > now:
-                    if agent_id is None or grant.agent_id == agent_id:
-                        active.append(grant)
+                if grant.expires_at > now and (
+                    agent_id is None or grant.agent_id == agent_id
+                ):
+                    active.append(grant)
             return active
 
     async def cleanup_expired(self) -> int:
         """Remove all expired grants from the store."""
         now = time.time()
         async with self._lock:
-            to_remove = [
-                gid for gid, g in self._grants.items() if g.expires_at <= now
-            ]
+            to_remove = [gid for gid, g in self._grants.items() if g.expires_at <= now]
             for gid in to_remove:
                 del self._grants[gid]
                 if gid in self._usage_counts:

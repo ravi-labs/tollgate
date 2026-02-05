@@ -21,12 +21,11 @@ from .exceptions import (
 )
 from .grants import GrantStore, InMemoryGrantStore
 from .helpers import guard, wrap_tool
-from .manifest_signing import sign_manifest, verify_manifest, get_manifest_hash
+from .manifest_signing import get_manifest_hash, sign_manifest, verify_manifest
 from .network_guard import NetworkGuard
+from .policy import PolicyEvaluator, YamlPolicyEvaluator
 from .policy_testing import PolicyTestRunner, PolicyTestRunResult
 from .rate_limiter import InMemoryRateLimiter, RateLimiter
-from .verification import make_verifier, sign_agent_context, verify_agent_context
-from .policy import PolicyEvaluator, YamlPolicyEvaluator
 from .registry import ToolRegistry
 from .tower import ControlTower
 from .types import (
@@ -42,6 +41,7 @@ from .types import (
     Outcome,
     ToolRequest,
 )
+from .verification import make_verifier, sign_agent_context, verify_agent_context
 
 __version__ = "1.4.0"
 

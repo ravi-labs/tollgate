@@ -41,7 +41,12 @@ class SQLiteGrantStore:
         table_name: Name of the grants table (default ``tollgate_grants``).
     """
 
-    def __init__(self, db_path: str | Path = "tollgate_grants.db", *, table_name: str = "tollgate_grants"):
+    def __init__(
+        self,
+        db_path: str | Path = "tollgate_grants.db",
+        *,
+        table_name: str = "tollgate_grants",
+    ):
         self._db_path = str(db_path)
         self._table = table_name
         self._conn = sqlite3.connect(self._db_path, check_same_thread=False)
@@ -97,11 +102,20 @@ class SQLiteGrantStore:
             d = dict(row)
         else:
             cols = [
-                "id", "agent_id", "effect", "tool", "action",
-                "resource_type", "expires_at", "granted_by",
-                "created_at", "reason", "usage_count", "revoked",
+                "id",
+                "agent_id",
+                "effect",
+                "tool",
+                "action",
+                "resource_type",
+                "expires_at",
+                "granted_by",
+                "created_at",
+                "reason",
+                "usage_count",
+                "revoked",
             ]
-            d = dict(zip(cols, row))
+            d = dict(zip(cols, row, strict=False))
 
         return Grant(
             id=d["id"],
@@ -208,9 +222,7 @@ class SQLiteGrantStore:
 
     async def list_active_grants(self, agent_id: str | None = None) -> list[Grant]:
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None, self._list_active_sync, agent_id
-        )
+        return await loop.run_in_executor(None, self._list_active_sync, agent_id)
 
     def _list_active_sync(self, agent_id: str | None) -> list[Grant]:
         now = time.time()
@@ -405,9 +417,7 @@ class SQLiteApprovalStore:
 
     async def get_request(self, approval_id: str) -> dict[str, Any] | None:
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None, self._get_request_sync, approval_id
-        )
+        return await loop.run_in_executor(None, self._get_request_sync, approval_id)
 
     def _get_request_sync(self, approval_id: str) -> dict[str, Any] | None:
         cursor = self._conn.execute(

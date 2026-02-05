@@ -9,8 +9,6 @@ Covers:
   - Agent Identity HMAC Signing
 """
 
-import time
-
 import pytest
 
 from tollgate import (
@@ -35,7 +33,6 @@ from tollgate import (
     sign_agent_context,
     verify_agent_context,
 )
-
 
 # ─────────────────────────────────────────────────────────────────────
 # Shared fixtures and mocks
@@ -103,7 +100,9 @@ class TestAuditSchemaVersioning:
         assert len(audit.events) == 1
         assert audit.events[0].schema_version == "1.0"
 
-    def test_audit_event_to_dict_includes_schema_version(self, agent_ctx, intent, tool_req):
+    def test_audit_event_to_dict_includes_schema_version(
+        self, agent_ctx, intent, tool_req
+    ):
         audit = MockAudit()
         tower = ControlTower(MockPolicy(), MockApprover(), audit)
         tower.execute(agent_ctx, intent, tool_req, lambda: "ok")
@@ -215,7 +214,9 @@ class TestParameterSchemaValidation:
         return ToolRegistry(manifest)
 
     def test_no_schema_means_no_errors(self, tmp_path):
-        registry = self._make_registry(tmp_path, '  "tool:a":\n    effect: "read"\n    resource_type: "data"')
+        registry = self._make_registry(
+            tmp_path, '  "tool:a":\n    effect: "read"\n    resource_type: "data"'
+        )
         errors = registry.validate_params("tool:a", {"anything": "goes"})
         assert errors == []
 
@@ -242,7 +243,9 @@ class TestParameterSchemaValidation:
         assert any("content" in e for e in errors)
 
         # Valid
-        errors = registry.validate_params("tool:write", {"path": "/tmp/x", "content": "hello"})
+        errors = registry.validate_params(
+            "tool:write", {"path": "/tmp/x", "content": "hello"}
+        )
         assert errors == []
 
     def test_type_validation(self, tmp_path):
@@ -329,7 +332,9 @@ class TestParameterSchemaValidation:
         assert errors == []
 
     def test_unknown_tool_returns_no_errors(self, tmp_path):
-        registry = self._make_registry(tmp_path, '  "tool:a":\n    effect: "read"\n    resource_type: "data"')
+        registry = self._make_registry(
+            tmp_path, '  "tool:a":\n    effect: "read"\n    resource_type: "data"'
+        )
         errors = registry.validate_params("unknown:tool", {"anything": True})
         assert errors == []
 
@@ -409,9 +414,7 @@ tools:
             manifest_version="1.0.0",
         )
 
-        result = await tower.execute_async(
-            agent_ctx, intent, tool_req, _noop_async
-        )
+        result = await tower.execute_async(agent_ctx, intent, tool_req, _noop_async)
         assert result == "ok"
 
 
@@ -482,14 +485,10 @@ class TestConstraints:
           allowed_values: ["users", "orders"] """
         registry = self._make_registry(tmp_path, yaml_text)
 
-        violations = registry.check_constraints(
-            "db:query", {"table": "admin_secrets"}
-        )
+        violations = registry.check_constraints("db:query", {"table": "admin_secrets"})
         assert len(violations) == 1
 
-        violations = registry.check_constraints(
-            "db:query", {"table": "users"}
-        )
+        violations = registry.check_constraints("db:query", {"table": "users"})
         assert violations == []
 
     def test_no_constraints_means_no_violations(self, tmp_path):
@@ -540,9 +539,9 @@ tools:
 class TestRateLimiting:
     @pytest.mark.asyncio
     async def test_allows_within_limit(self, agent_ctx):
-        limiter = InMemoryRateLimiter([
-            {"agent_id": "*", "tool": "*", "max_calls": 5, "window_seconds": 60}
-        ])
+        limiter = InMemoryRateLimiter(
+            [{"agent_id": "*", "tool": "*", "max_calls": 5, "window_seconds": 60}]
+        )
         req = ToolRequest("tool:a", "run", "data", Effect.READ, {})
 
         for _ in range(5):
@@ -552,9 +551,9 @@ class TestRateLimiting:
 
     @pytest.mark.asyncio
     async def test_blocks_over_limit(self, agent_ctx):
-        limiter = InMemoryRateLimiter([
-            {"agent_id": "*", "tool": "*", "max_calls": 3, "window_seconds": 60}
-        ])
+        limiter = InMemoryRateLimiter(
+            [{"agent_id": "*", "tool": "*", "max_calls": 3, "window_seconds": 60}]
+        )
         req = ToolRequest("tool:a", "run", "data", Effect.READ, {})
 
         for _ in range(3):
@@ -570,9 +569,17 @@ class TestRateLimiting:
 
     @pytest.mark.asyncio
     async def test_effect_specific_limit(self, agent_ctx):
-        limiter = InMemoryRateLimiter([
-            {"agent_id": "*", "tool": "*", "effect": "write", "max_calls": 2, "window_seconds": 60}
-        ])
+        limiter = InMemoryRateLimiter(
+            [
+                {
+                    "agent_id": "*",
+                    "tool": "*",
+                    "effect": "write",
+                    "max_calls": 2,
+                    "window_seconds": 60,
+                }
+            ]
+        )
         read_req = ToolRequest("tool:a", "run", "data", Effect.READ, {})
         write_req = ToolRequest("tool:a", "run", "data", Effect.WRITE, {})
 
@@ -591,9 +598,9 @@ class TestRateLimiting:
 
     @pytest.mark.asyncio
     async def test_tool_prefix_matching(self, agent_ctx):
-        limiter = InMemoryRateLimiter([
-            {"agent_id": "*", "tool": "mcp:*", "max_calls": 2, "window_seconds": 60}
-        ])
+        limiter = InMemoryRateLimiter(
+            [{"agent_id": "*", "tool": "mcp:*", "max_calls": 2, "window_seconds": 60}]
+        )
         mcp_req = ToolRequest("mcp:server.tool", "run", "data", Effect.READ, {})
         other_req = ToolRequest("langchain:tool", "run", "data", Effect.READ, {})
 
@@ -611,9 +618,9 @@ class TestRateLimiting:
 
     @pytest.mark.asyncio
     async def test_reset_clears_state(self, agent_ctx):
-        limiter = InMemoryRateLimiter([
-            {"agent_id": "*", "tool": "*", "max_calls": 1, "window_seconds": 60}
-        ])
+        limiter = InMemoryRateLimiter(
+            [{"agent_id": "*", "tool": "*", "max_calls": 1, "window_seconds": 60}]
+        )
         req = ToolRequest("tool:a", "run", "data", Effect.READ, {})
 
         allowed, _, _ = await limiter.check_rate_limit(agent_ctx, req)
@@ -629,9 +636,9 @@ class TestRateLimiting:
 
     @pytest.mark.asyncio
     async def test_tower_raises_rate_limited(self, agent_ctx, intent, tool_req):
-        limiter = InMemoryRateLimiter([
-            {"agent_id": "*", "tool": "*", "max_calls": 1, "window_seconds": 60}
-        ])
+        limiter = InMemoryRateLimiter(
+            [{"agent_id": "*", "tool": "*", "max_calls": 1, "window_seconds": 60}]
+        )
         audit = MockAudit()
         tower = ControlTower(
             MockPolicy(),
@@ -679,6 +686,7 @@ class TestAgentIdentityVerification:
 
         # Tamper with agent_id
         from dataclasses import replace
+
         tampered = replace(signed, agent_id="agent-evil")
         assert verify_agent_context(tampered, secret) is False
 
@@ -742,8 +750,10 @@ class TestAgentIdentityVerification:
 
 class TestIntegration:
     @pytest.mark.asyncio
-    async def test_full_pipeline_identity_rate_schema_constraints(self, tmp_path, intent):
-        """Test all security hardening features working together in the enforcement pipeline."""
+    async def test_full_pipeline_identity_rate_schema_constraints(
+        self, tmp_path, intent
+    ):
+        """Test all security hardening features together."""
         manifest = tmp_path / "manifest.yaml"
         manifest.write_text("""
 version: "1.0.0"
@@ -763,9 +773,9 @@ tools:
 """)
         registry = ToolRegistry(manifest)
         secret = b"integration-secret"
-        limiter = InMemoryRateLimiter([
-            {"agent_id": "*", "tool": "*", "max_calls": 10, "window_seconds": 60}
-        ])
+        limiter = InMemoryRateLimiter(
+            [{"agent_id": "*", "tool": "*", "max_calls": 10, "window_seconds": 60}]
+        )
         audit = MockAudit()
 
         tower = ControlTower(

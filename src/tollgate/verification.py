@@ -35,9 +35,7 @@ def _compute_signature(agent_ctx: AgentContext, secret_key: bytes) -> str:
     return hmac.new(secret_key, payload.encode("utf-8"), hashlib.sha256).hexdigest()
 
 
-def sign_agent_context(
-    agent_ctx: AgentContext, secret_key: bytes
-) -> AgentContext:
+def sign_agent_context(agent_ctx: AgentContext, secret_key: bytes) -> AgentContext:
     """Return a new AgentContext with an HMAC signature in metadata.
 
     The signature covers ``agent_id``, ``version``, and ``owner``.
@@ -48,9 +46,7 @@ def sign_agent_context(
     return replace(agent_ctx, metadata=new_meta)
 
 
-def verify_agent_context(
-    agent_ctx: AgentContext, secret_key: bytes
-) -> bool:
+def verify_agent_context(agent_ctx: AgentContext, secret_key: bytes) -> bool:
     """Verify that the AgentContext signature is valid.
 
     Returns True if the signature matches, False otherwise.
