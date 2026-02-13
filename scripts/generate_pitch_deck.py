@@ -243,36 +243,50 @@ def create_powerpoint():
     # Slide 2: The Problem
     add_content_slide(prs, "The Challenge", [
         "AI agents are becoming autonomous decision-makers in enterprise systems",
-        "Unrestricted tool access creates security, compliance, and operational risks",
-        "Traditional API gateways don't understand agent intent or context",
+        "Governance needed for ENTIRE agentic flow, not just individual tool calls",
+        "Traditional API gateways don't understand agent intent, context, or behavior",
         "No standardized way to enforce policies across different agent frameworks",
-        "Lack of visibility into what agents are doing and why"
+        "Lack of visibility into what agents are doing, why, and their track record"
     ])
 
     # Slide 3: The Solution
     add_content_slide(prs, "Introducing Tollgate", [
-        "A lightweight, framework-agnostic runtime enforcement layer for AI agents",
-        "Policy-as-code governance with YAML-based rule definitions",
-        "Real-time decision making: ALLOW, DENY, or escalate to human approval",
-        "Complete audit trail with cryptographic verification",
-        "Integrates with any agent framework: LangChain, CrewAI, AutoGen, MCP, and more"
+        "Runtime governance for the COMPLETE agentic flow - not just tool calls",
+        "Controls: Intent (why) + Context (who) + Request (what) + Behavior (history)",
+        "Policy-as-code with YAML rules: ALLOW, DENY, or escalate to human approval",
+        "Agent reputation tracking influences future decisions automatically",
+        "Integrates with any framework: LangChain, CrewAI, AutoGen, MCP, and more"
     ])
 
-    # Slide 4: Core Architecture
+    # Slide 4: Full Flow Governance
     add_feature_slide(
         prs,
-        "Core Architecture",
-        "A simple yet powerful control tower that sits between your agent and its tools",
+        "Full Agentic Flow Governance",
+        "Tollgate evaluates the complete picture - not just the tool being called",
         [
-            ("ControlTower", "Central enforcement point for all tool invocations"),
-            ("PolicyEvaluator", "YAML-based rules with pattern matching and conditions"),
-            ("GrantStore", "Persistent grants for pre-approved operations"),
-            ("AuditSink", "Comprehensive logging with multiple output formats"),
-            ("Approver", "Human-in-the-loop for sensitive operations"),
+            ("Intent", "WHY is the agent doing this? (action + reasoning)"),
+            ("Context", "WHO is the agent? (identity, session, tenant, metadata)"),
+            ("Request", "WHAT tool/action is being invoked? (name, arguments)"),
+            ("Reputation", "HOW has this agent behaved? (trust score, history)"),
+            ("Workflow", "DOES this need approval chain? (escalation, multi-step)"),
         ]
     )
 
-    # Slide 5: Enterprise Security
+    # Slide 5: Core Architecture
+    add_feature_slide(
+        prs,
+        "Core Architecture",
+        "A simple yet powerful control tower that wraps your entire agent runtime",
+        [
+            ("ControlTower", "Central enforcement point for all agent operations"),
+            ("PolicyEvaluator", "YAML-based rules matching intent, context, and request"),
+            ("ReputationManager", "Track agent behavior and adjust trust dynamically"),
+            ("WorkflowEngine", "Multi-step approval chains and escalation paths"),
+            ("AuditSink", "Complete audit trail with cryptographic verification"),
+        ]
+    )
+
+    # Slide 6: Enterprise Security
     add_feature_slide(
         prs,
         "Enterprise Security Features",
@@ -481,16 +495,47 @@ def create_pdf():
     # Executive Summary
     story.append(Paragraph("Executive Summary", heading_style))
     story.append(Paragraph(
-        "Tollgate is a lightweight, framework-agnostic runtime enforcement layer for AI agents. "
-        "As AI agents become increasingly autonomous in enterprise systems, Tollgate provides the "
-        "governance, security, and visibility needed for production deployments.",
+        "Tollgate is a lightweight, framework-agnostic runtime governance layer for AI agents. "
+        "Unlike simple tool-level controls, Tollgate governs the <b>entire agentic flow</b> - "
+        "evaluating intent (why), context (who), request (what), and behavior history (track record) "
+        "to make intelligent ALLOW/DENY/ASK decisions.",
         body_style
     ))
     story.append(Spacer(1, 0.2*inch))
 
+    # What Tollgate Governs
+    story.append(Paragraph("What Tollgate Governs", subheading_style))
+    governance_data = [
+        ['Dimension', 'What It Controls', 'Example'],
+        ['Intent', 'WHY the agent is acting', '"Send email to customer with invoice"'],
+        ['Context', 'WHO the agent is', 'Agent ID, session, tenant, trust level'],
+        ['Request', 'WHAT tool/action', 'Tool name, arguments, parameters'],
+        ['Reputation', 'HOW agent has behaved', 'Trust score based on history'],
+        ['Workflow', 'APPROVAL requirements', 'Multi-step chains, escalation'],
+    ]
+    gov_table = Table(governance_data, colWidths=[1.5*inch, 2.5*inch, 4.5*inch])
+    gov_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), HexColor('#1E3A5F')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 11),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+        ('TOPPADDING', (0, 0), (-1, 0), 10),
+        ('BACKGROUND', (0, 1), (-1, -1), HexColor('#F8FAFC')),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('TOPPADDING', (0, 1), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ('GRID', (0, 0), (-1, -1), 1, HexColor('#E5E7EB')),
+    ]))
+    story.append(gov_table)
+    story.append(Spacer(1, 0.3*inch))
+
     # Key capabilities table
+    story.append(Paragraph("Key Capabilities", subheading_style))
     capabilities_data = [
         ['Capability', 'Description'],
+        ['Full Flow Governance', 'Evaluate intent + context + request + reputation together'],
         ['Policy Enforcement', 'YAML-based rules with ALLOW/DENY/ASK decisions'],
         ['Security Controls', 'Encryption, signatures, rate limiting, network guards'],
         ['Policy Versioning', 'Git-like version control with rollback'],
@@ -523,10 +568,10 @@ def create_pdf():
     story.append(Paragraph("The Challenge", heading_style))
     problems = [
         "AI agents are becoming autonomous decision-makers in enterprise systems",
-        "Unrestricted tool access creates security, compliance, and operational risks",
-        "Traditional API gateways don't understand agent intent or context",
+        "Need governance for ENTIRE agentic flow, not just individual tool calls",
+        "Traditional API gateways don't understand agent intent, context, or behavior patterns",
         "No standardized way to enforce policies across different agent frameworks",
-        "Lack of visibility into what agents are doing and why",
+        "Lack of visibility into what agents are doing, why, and their track record",
     ]
     for p in problems:
         story.append(Paragraph(f"• {p}", bullet_style))
@@ -535,11 +580,11 @@ def create_pdf():
     # The Solution
     story.append(Paragraph("The Solution", heading_style))
     solutions = [
-        "A lightweight, framework-agnostic runtime enforcement layer",
-        "Policy-as-code governance with YAML-based rule definitions",
-        "Real-time decision making: ALLOW, DENY, or escalate to human approval",
-        "Complete audit trail with cryptographic verification",
-        "Integrates with any agent framework: LangChain, CrewAI, AutoGen, MCP, and more",
+        "Runtime governance for the COMPLETE agentic flow - not just tool calls",
+        "Evaluates: Intent (why) + Context (who) + Request (what) + Reputation (history)",
+        "Policy-as-code with YAML rules matching any combination of dimensions",
+        "Agent reputation tracking influences future decisions automatically",
+        "Integrates with any framework: LangChain, CrewAI, AutoGen, MCP, and more",
     ]
     for s in solutions:
         story.append(Paragraph(f"• {s}", bullet_style))

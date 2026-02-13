@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Leadership showcase demo for Tollgate.
+"""Leadership safety demo for Tollgate.
 
 This demo is designed for a quick 3-5 minute leadership presentation.
 It compares:
@@ -7,7 +7,7 @@ It compares:
 2) Tool execution through Tollgate ControlTower
 
 Run:
-    python examples/leadership_showcase/demo.py
+    python examples/safety_demo/demo.py
 """
 
 from __future__ import annotations

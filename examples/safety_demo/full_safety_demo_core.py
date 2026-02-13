@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Comprehensive safety showcase for leadership demos.
+"""Comprehensive safety demo for leadership presentations.
 
 This script demonstrates the real power of Tollgate across the full
 safety stack with concrete pass/fail examples.
 
 Run:
-    python examples/leadership_showcase/full_safety_showcase.py
+    python examples/safety_demo/full_safety_demo.py
 """
 
 from __future__ import annotations
@@ -77,9 +77,9 @@ EXAMPLE_DIR = Path(__file__).parent
 MANIFEST_PATH = EXAMPLE_DIR / "full_manifest.yaml"
 POLICY_PATH = EXAMPLE_DIR / "full_policy.yaml"
 SCENARIOS_PATH = EXAMPLE_DIR / "full_scenarios.yaml"
-AUDIT_PATH = EXAMPLE_DIR / "full_showcase_audit.jsonl"
+AUDIT_PATH = EXAMPLE_DIR / "full_safety_audit.jsonl"
 CHAIN_AUDIT_PATH = EXAMPLE_DIR / "full_immutable_audit.jsonl"
-SQLITE_DB_PATH = EXAMPLE_DIR / "full_showcase.sqlite"
+SQLITE_DB_PATH = EXAMPLE_DIR / "full_safety.sqlite"
 RUNTIME_MANIFEST_PATH = EXAMPLE_DIR / "runtime_manifest.yaml"
 
 MANIFEST_SIGNING_KEY = b"demo-manifest-key-123456"
@@ -933,8 +933,8 @@ async def check_persistent_grants(results: list[CheckResult]) -> None:
         record(results, name, False, f"Unexpected error: {exc}")
 
 
-async def run_showcase() -> None:
-    banner("TOLLGATE FULL SAFETY SHOWCASE")
+async def run_full_safety_demo() -> None:
+    banner("TOLLGATE FULL SAFETY DEMO")
     print("This run demonstrates each major safety layer with concrete outcomes.")
 
     AUDIT_PATH.write_text("", encoding="utf-8")
@@ -957,7 +957,7 @@ async def run_showcase() -> None:
     await check_policy_regression_tests(results)
     await check_persistent_grants(results)
 
-    banner("SHOWCASE SCORECARD")
+    banner("DEMO SCORECARD")
     counts = {"PASS": 0, "FAIL": 0, "SKIP": 0}
     for result in results:
         counts[result.status] += 1
@@ -977,4 +977,4 @@ async def run_showcase() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(run_showcase())
+    asyncio.run(run_full_safety_demo())

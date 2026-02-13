@@ -1,4 +1,4 @@
-# Leadership Showcase Demo
+# Leadership Safety Demo
 
 This folder now contains two demos for leadership presentations.
 
@@ -9,7 +9,8 @@ Shows the same agent behavior with and without Tollgate.
 Run:
 
 ```bash
-python examples/leadership_showcase/demo.py
+# Run from this folder
+python demo.py
 ```
 
 Use this when you need a fast narrative around risk reduction.
@@ -21,7 +22,8 @@ Shows concrete examples for all major safety controls and ends with a scorecard.
 Run:
 
 ```bash
-python examples/leadership_showcase/full_safety_showcase.py
+# Run from this folder
+python full_safety_demo.py
 ```
 
 This includes examples for:
@@ -46,6 +48,7 @@ This includes examples for:
 
 - `demo.py`: Fast before/after narrative
 - `manifest.yaml`, `policy.yaml`: Inputs for fast demo
-- `full_safety_showcase.py`: Comprehensive stack showcase
-- `full_manifest.yaml`, `full_policy.yaml`, `full_scenarios.yaml`: Inputs for full showcase
-- `audit.jsonl`, `full_showcase_audit.jsonl`, `full_immutable_audit.jsonl`: Generated evidence logs
+- `full_safety_demo.py`: Entry point for the complete safety demo
+- `full_safety_demo_core.py`: Core implementation for the complete safety demo
+- `full_manifest.yaml`, `full_policy.yaml`, `full_scenarios.yaml`: Inputs for the complete safety demo
+- `audit.jsonl`, `full_safety_audit.jsonl`, `full_immutable_audit.jsonl`: Generated evidence logs

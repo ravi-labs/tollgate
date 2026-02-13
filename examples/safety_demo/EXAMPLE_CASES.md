@@ -1,15 +1,16 @@
 # Tollgate Example Cases: Problems and Solutions
 
-This page summarizes all showcase cases in a shareable format for leadership and stakeholder reviews.
+This page summarizes all example cases in a shareable format for leadership and stakeholder reviews.
 
 ## Run The Demos
 
 ```bash
+# Run from this folder
 # Fast before/after narrative (3-5 min)
-.venv/bin/python examples/leadership_showcase/demo.py
+python demo.py
 
-# Full safety stack showcase (10-15 min)
-.venv/bin/python examples/leadership_showcase/full_safety_showcase.py
+# Full safety stack demo (10-15 min)
+python full_safety_demo.py
 ```
 
 ## Case Summary
