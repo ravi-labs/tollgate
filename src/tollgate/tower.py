@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from .approvals import Approver, compute_request_hash
-from .audit import AuditSink
+from .audit import AuditSink, CompositeAuditSink
 from .exceptions import (
     TollgateApprovalDenied,
     TollgateConstraintViolation,
@@ -16,6 +16,7 @@ from .exceptions import (
 from .grants import GrantStore
 from .policy import PolicyEvaluator
 from .registry import ToolRegistry
+from .telemetry import TelemetryAuditSink
 from .types import (
     AgentContext,
     ApprovalOutcome,
@@ -56,10 +57,18 @@ class ControlTower:
         verify_fn: Callable[[AgentContext], bool] | None = None,
         circuit_breaker: Any | None = None,  # CircuitBreaker protocol
         network_guard: Any | None = None,  # NetworkGuard
+        enable_telemetry: bool | None = None,
     ):
         self.policy = policy
         self.approver = approver
-        self.audit = audit
+
+        # Wrap user's audit sink with telemetry for adoption metrics
+        telemetry = TelemetryAuditSink(enabled=enable_telemetry)
+        if telemetry.enabled:
+            self.audit = CompositeAuditSink([audit, telemetry])
+        else:
+            self.audit = audit
+
         self.grant_store = grant_store
         self.redact_fn = redact_fn or self._default_redact
         self.rate_limiter = rate_limiter

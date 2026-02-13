@@ -1,0 +1,60 @@
+version: "1.0.0"
+tools:
+  "api:get_customer_summary":
+    effect: read
+    resource_type: customer
+    params_schema:
+      type: object
+      required: [customer_id]
+      properties:
+        customer_id:
+          type: string
+          pattern: "^cust-[0-9]{3}$"
+
+  "api:update_customer_note":
+    effect: write
+    resource_type: customer
+    params_schema:
+      type: object
+      required: [customer_id, note]
+      properties:
+        customer_id:
+          type: string
+          pattern: "^cust-[0-9]{3}$"
+        note:
+          type: string
+          minLength: 3
+          maxLength: 500
+
+  "api:fetch_partner_data":
+    effect: read
+    resource_type: url
+    params_schema:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+    constraints:
+      allowed_url_patterns:
+        - "https://api.company.com/*"
+      blocked_url_patterns:
+        - "https://api.company.com/private/*"
+
+  "api:post_webhook":
+    effect: notify
+    resource_type: webhook
+    params_schema:
+      type: object
+      required: [url, payload]
+      properties:
+        url:
+          type: string
+        payload:
+          type: object
+
+  "api:unstable_sync":
+    effect: write
+    resource_type: vendor
+
+# tampered

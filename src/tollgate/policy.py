@@ -21,7 +21,9 @@ class YamlPolicyEvaluator:
     """YAML-based policy evaluator with safe defaults."""
 
     # Security: Whitelist of allowed attributes for agent_ctx and intent matching
-    ALLOWED_AGENT_ATTRS = frozenset({"agent_id", "version", "environment", "role"})
+    ALLOWED_AGENT_ATTRS = frozenset(
+        {"agent_id", "version", "environment", "role", "org_id"}
+    )
     # Delegation-aware matching keys (checked separately from ALLOWED_AGENT_ATTRS)
     DELEGATION_KEYS = frozenset(
         {
@@ -129,7 +131,11 @@ class YamlPolicyEvaluator:
                     continue  # Handled separately below
                 if key not in self.ALLOWED_AGENT_ATTRS:
                     continue
-                if getattr(agent_ctx, key, None) != expected_val:
+                # Special handling for org_id (from metadata via property)
+                if key == "org_id":
+                    if agent_ctx.org_id != expected_val:
+                        return False
+                elif getattr(agent_ctx, key, None) != expected_val:
                     return False
 
         # Match delegation constraints (3.4)

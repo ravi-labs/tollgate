@@ -40,7 +40,9 @@ class GrantStore(Protocol):
 
     async def revoke_grant(self, grant_id: str) -> bool: ...
 
-    async def list_active_grants(self, agent_id: str | None = None) -> list[Grant]: ...
+    async def list_active_grants(
+        self, agent_id: str | None = None, org_id: str | None = None
+    ) -> list[Grant]: ...
 
     async def cleanup_expired(self) -> int: ...
 
@@ -73,7 +75,11 @@ class InMemoryGrantStore:
                 if grant.expires_at <= now:
                     continue
 
-                # 2. Match agent_id
+                # 2. Match org_id (if grant is org-scoped, agent must be in same org)
+                if grant.org_id is not None and grant.org_id != agent_ctx.org_id:
+                    continue
+
+                # 3. Match agent_id
                 if grant.agent_id is not None and grant.agent_id != agent_ctx.agent_id:
                     continue
 
@@ -121,16 +127,21 @@ class InMemoryGrantStore:
                 return True
             return False
 
-    async def list_active_grants(self, agent_id: str | None = None) -> list[Grant]:
-        """List all non-expired grants, optionally filtered by agent."""
+    async def list_active_grants(
+        self, agent_id: str | None = None, org_id: str | None = None
+    ) -> list[Grant]:
+        """List all non-expired grants, optionally filtered by agent or org."""
         now = time.time()
         async with self._lock:
             active = []
             for grant in self._grants.values():
-                if grant.expires_at > now and (
-                    agent_id is None or grant.agent_id == agent_id
-                ):
-                    active.append(grant)
+                if grant.expires_at <= now:
+                    continue
+                if agent_id is not None and grant.agent_id != agent_id:
+                    continue
+                if org_id is not None and grant.org_id != org_id:
+                    continue
+                active.append(grant)
             return active
 
     async def cleanup_expired(self) -> int:

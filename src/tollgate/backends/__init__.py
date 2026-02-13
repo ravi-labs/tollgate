@@ -30,8 +30,9 @@ __all__ = [
 
 # Conditionally export Redis backends if redis is available
 try:
+    from .redis_rate_limiter import RedisRateLimiter
     from .redis_store import RedisApprovalStore, RedisGrantStore
 
-    __all__ += ["RedisGrantStore", "RedisApprovalStore"]
+    __all__ += ["RedisGrantStore", "RedisApprovalStore", "RedisRateLimiter"]
 except ImportError:
     pass

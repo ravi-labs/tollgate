@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.4.0] - 2026-02-05 — "Defense in Depth"
 ### Added
+- **Operational Telemetry**: Lightweight, anonymous adoption metrics to track tool call outcomes and framework usage. Supports opt-out via `TOLLGATE_TELEMETRY=0` or code configuration.
 - **Multi-Agent Delegation Security**: Extended `AgentContext` with `delegated_by` field to track delegation chains. New properties: `delegation_depth`, `is_delegated`, `root_agent`. Policy rules can now match on `max_delegation_depth`, `deny_delegated`, `allowed_delegators`, `blocked_delegators`.
 - **Policy Testing Framework**: New `PolicyTestRunner` class for declarative scenario-based policy testing. Supports YAML test scenarios with expected decisions, reason matching, and policy ID verification. CI-friendly with `tollgate test-policy` CLI command.
 - **Context Integrity Monitor**: New `ContextIntegrityMonitor` class to detect unauthorized modifications to agent context between turns. Uses SHA-256 checksums with configurable immutable fields.

@@ -220,23 +220,30 @@ class SQLiteGrantStore:
         self._conn.commit()
         return cursor.rowcount > 0
 
-    async def list_active_grants(self, agent_id: str | None = None) -> list[Grant]:
+    async def list_active_grants(
+        self, agent_id: str | None = None, org_id: str | None = None
+    ) -> list[Grant]:
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self._list_active_sync, agent_id)
+        return await loop.run_in_executor(
+            None, self._list_active_sync, agent_id, org_id
+        )
 
-    def _list_active_sync(self, agent_id: str | None) -> list[Grant]:
+    def _list_active_sync(
+        self, agent_id: str | None, org_id: str | None = None
+    ) -> list[Grant]:
         now = time.time()
+        query = f"SELECT * FROM {self._table} WHERE expires_at > ? AND revoked = 0"
+        params: list = [now]
+
         if agent_id is not None:
-            cursor = self._conn.execute(
-                f"""SELECT * FROM {self._table}
-                WHERE expires_at > ? AND revoked = 0 AND agent_id = ?""",
-                (now, agent_id),
-            )
-        else:
-            cursor = self._conn.execute(
-                f"SELECT * FROM {self._table} WHERE expires_at > ? AND revoked = 0",
-                (now,),
-            )
+            query += " AND agent_id = ?"
+            params.append(agent_id)
+
+        if org_id is not None:
+            query += " AND org_id = ?"
+            params.append(org_id)
+
+        cursor = self._conn.execute(query, params)
         cursor.row_factory = sqlite3.Row
         return [self._row_to_grant(row) for row in cursor]
 

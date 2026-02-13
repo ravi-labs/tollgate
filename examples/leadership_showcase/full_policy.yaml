@@ -1,0 +1,29 @@
+version: "1.0"
+rules:
+  - id: allow_trusted_delegated_writes
+    effect: write
+    decision: ALLOW
+    reason: "Trusted delegated write allowed"
+    agent:
+      allowed_delegators:
+        - "orchestrator"
+      max_delegation_depth: 2
+
+  - id: allow_reads
+    effect: read
+    decision: ALLOW
+    reason: "Read operations are allowed"
+
+  - id: allow_notifies
+    effect: notify
+    decision: ALLOW
+    reason: "Notify operations are allowed"
+
+  - id: ask_writes
+    effect: write
+    decision: ASK
+    reason: "Writes require approval"
+
+  - id: deny_default
+    decision: DENY
+    reason: "No matching rule"

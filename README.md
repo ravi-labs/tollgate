@@ -353,6 +353,7 @@ python examples/mock_tickets/demo.py
 
 - **[QUICKSTART.md](./QUICKSTART.md)** - Get started in 5 minutes
 - **[FEATURES.md](./FEATURES.md)** - Complete feature guide
+- **[TELEMETRY.md](./TELEMETRY.md)** - Usage analytics and opt-out
 - **[COMPARISON.md](./COMPARISON.md)** - Integration effort comparison
 - **[SECURITY.md](./SECURITY.md)** - Security model and guarantees
 - **[CHANGELOG.md](./CHANGELOG.md)** - Version history

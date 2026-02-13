@@ -57,6 +57,52 @@ class AgentContext:
         """The original (root) agent that started the delegation chain."""
         return self.delegated_by[0] if self.delegated_by else self.agent_id
 
+    @property
+    def org_id(self) -> str | None:
+        """Organization ID for multi-tenant deployments.
+
+        Stored in metadata["org_id"]. Returns None if not set.
+
+        Example:
+            ctx = AgentContext(
+                agent_id="agent-1",
+                version="1.0",
+                owner="user",
+                metadata={"org_id": "org-123"}
+            )
+            assert ctx.org_id == "org-123"
+        """
+        return self.metadata.get("org_id")
+
+    @classmethod
+    def with_org(
+        cls,
+        agent_id: str,
+        version: str,
+        owner: str,
+        org_id: str,
+        **kwargs: Any,
+    ) -> "AgentContext":
+        """Factory method to create an AgentContext with org_id.
+
+        Example:
+            ctx = AgentContext.with_org(
+                agent_id="agent-1",
+                version="1.0",
+                owner="user",
+                org_id="org-123",
+            )
+        """
+        metadata = dict(kwargs.pop("metadata", {}))
+        metadata["org_id"] = org_id
+        return cls(
+            agent_id=agent_id,
+            version=version,
+            owner=owner,
+            metadata=metadata,
+            **kwargs,
+        )
+
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
         d["delegated_by"] = list(self.delegated_by)
@@ -125,6 +171,7 @@ class Grant:
     created_at: float
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     reason: str | None = None
+    org_id: str | None = None  # Organization scope (None = global)
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)

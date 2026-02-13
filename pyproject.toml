@@ -40,9 +40,25 @@ dev = [
 redis = [
     "redis[hiredis]>=5.0.0",
 ]
+otel = [
+    "opentelemetry-api>=1.20.0",
+    "opentelemetry-sdk>=1.20.0",
+    "opentelemetry-exporter-otlp>=1.20.0",
+]
+api = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+    "pydantic>=2.0.0",
+]
+encryption = [
+    "cryptography>=41.0.0",
+]
+enterprise = [
+    "tollgate[redis,otel,api,encryption]",
+]
 
 [project.scripts]
-tollgate = "tollgate.policy_testing:cli_main"
+tollgate = "tollgate.cli:cli_entry"
 
 [project.urls]
 Homepage = "https://github.com/ravi-labs/tollgate"
@@ -63,7 +79,11 @@ select = ["E", "F", "I", "N", "UP", "B", "A", "C4", "SIM", "ARG", "PTH", "RET"]
 ignore = []
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["ARG002"]
+# ARG001/ARG002 for pytest fixtures, E402 for pytest.importorskip, E501/B007 for tests
+"tests/**" = ["ARG001", "ARG002", "E402", "E501", "B007"]
+"src/tollgate/api/routes.py" = ["B008"]
+# cmd.Cmd uses arg parameter convention; N802 for do_EOF override
+"src/tollgate/playground.py" = ["ARG002", "N802", "SIM108"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

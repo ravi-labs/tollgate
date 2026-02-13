@@ -40,12 +40,14 @@ class RateLimitRule:
         self,
         *,
         agent_id: str = "*",
+        org_id: str = "*",
         tool: str = "*",
         effect: str | None = None,
         max_calls: int,
         window_seconds: int,
     ):
         self.agent_id = agent_id
+        self.org_id = org_id
         self.tool = tool
         self.effect = effect
         self.max_calls = max_calls
@@ -53,6 +55,10 @@ class RateLimitRule:
 
     def matches(self, agent_ctx: AgentContext, tool_request: ToolRequest) -> bool:
         """Check if this rule applies to the given request."""
+        # Org match
+        if self.org_id != "*" and agent_ctx.org_id != self.org_id:
+            return False
+
         # Agent match
         if self.agent_id != "*" and self.agent_id != agent_ctx.agent_id:
             return False
@@ -77,7 +83,11 @@ class RateLimitRule:
 
     def bucket_key(self, agent_ctx: AgentContext) -> str:
         """Generate a unique bucket key for this rule + agent."""
-        return f"{self.agent_id}|{self.tool}|{self.effect or '*'}|{agent_ctx.agent_id}"
+        org = agent_ctx.org_id or "_global_"
+        return (
+            f"{self.org_id}|{self.agent_id}|{self.tool}|"
+            f"{self.effect or '*'}|{org}|{agent_ctx.agent_id}"
+        )
 
 
 class InMemoryRateLimiter:
@@ -106,6 +116,7 @@ class InMemoryRateLimiter:
                 self._rules.append(
                     RateLimitRule(
                         agent_id=r.get("agent_id", "*"),
+                        org_id=r.get("org_id", "*"),
                         tool=r.get("tool", "*"),
                         effect=r.get("effect"),
                         max_calls=r["max_calls"],

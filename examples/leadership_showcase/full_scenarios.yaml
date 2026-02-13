@@ -1,0 +1,87 @@
+scenarios:
+  - name: "Allow read operations"
+    agent:
+      agent_id: "ops-agent"
+      version: "1.0"
+      owner: "innovation-lab"
+    tool_request:
+      tool: "api:get_customer_summary"
+      action: "get"
+      resource_type: "customer"
+      effect: "read"
+      params:
+        customer_id: "cust-101"
+      manifest_version: "1.0.0"
+    expected:
+      decision: "ALLOW"
+      policy_id: "allow_reads"
+
+  - name: "Ask direct write"
+    agent:
+      agent_id: "ops-agent"
+      version: "1.0"
+      owner: "innovation-lab"
+    tool_request:
+      tool: "api:update_customer_note"
+      action: "post"
+      resource_type: "customer"
+      effect: "write"
+      params:
+        customer_id: "cust-101"
+        note: "Manual review required"
+      manifest_version: "1.0.0"
+    expected:
+      decision: "ASK"
+      policy_id: "ask_writes"
+
+  - name: "Ask untrusted delegation"
+    agent:
+      agent_id: "worker-agent"
+      version: "1.0"
+      owner: "innovation-lab"
+      delegated_by: ["external-router"]
+    tool_request:
+      tool: "api:update_customer_note"
+      action: "post"
+      resource_type: "customer"
+      effect: "write"
+      params:
+        customer_id: "cust-101"
+        note: "This should be blocked"
+      manifest_version: "1.0.0"
+    expected:
+      decision: "ASK"
+      policy_id: "ask_writes"
+
+  - name: "Allow trusted delegated write"
+    agent:
+      agent_id: "worker-agent"
+      version: "1.0"
+      owner: "innovation-lab"
+      delegated_by: ["orchestrator"]
+    tool_request:
+      tool: "api:update_customer_note"
+      action: "post"
+      resource_type: "customer"
+      effect: "write"
+      params:
+        customer_id: "cust-101"
+        note: "Trusted path"
+      manifest_version: "1.0.0"
+    expected:
+      decision: "ALLOW"
+      policy_id: "allow_trusted_delegated_writes"
+
+  - name: "Deny unknown effect"
+    agent:
+      agent_id: "ops-agent"
+      version: "1.0"
+      owner: "innovation-lab"
+    tool_request:
+      tool: "api:unknown"
+      action: "do"
+      resource_type: "unknown"
+      effect: "unknown"
+    expected:
+      decision: "DENY"
+      reason_contains: "Unknown tool effect"

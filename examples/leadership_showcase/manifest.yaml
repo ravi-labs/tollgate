@@ -1,0 +1,43 @@
+version: "1.0.0"
+tools:
+  "api:get_account_summary":
+    effect: read
+    resource_type: account
+    params_schema:
+      type: object
+      required: [account_id]
+      properties:
+        account_id:
+          type: string
+          pattern: "^acct-[0-9]{4}$"
+
+  "api:transfer_funds":
+    effect: write
+    resource_type: payment
+    params_schema:
+      type: object
+      required: [to_account, amount, reason]
+      properties:
+        to_account:
+          type: string
+          pattern: "^acct-[0-9]{4}$"
+        amount:
+          type: number
+          minimum: 0.01
+          maximum: 1000000
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 200
+
+  "api:send_webhook":
+    effect: notify
+    resource_type: webhook
+    params_schema:
+      type: object
+      required: [url, payload]
+      properties:
+        url:
+          type: string
+        payload:
+          type: object

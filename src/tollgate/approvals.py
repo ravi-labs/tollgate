@@ -112,6 +112,50 @@ class InMemoryApprovalStore(ApprovalStore):
         except asyncio.TimeoutError:
             return ApprovalOutcome.TIMEOUT
 
+    async def list_requests(
+        self,
+        status: str | None = None,
+        org_id: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """List approval requests with optional filters.
+
+        Args:
+            status: Filter by status ("pending", "approved", "denied")
+            org_id: Filter by organization ID (from agent metadata)
+
+        Returns:
+            List of approval request dictionaries
+        """
+        results = []
+        for req in self._requests.values():
+            # Filter by status
+            if status:
+                outcome = req.get("outcome", ApprovalOutcome.DEFERRED)
+                if status == "pending" and outcome != ApprovalOutcome.DEFERRED:
+                    continue
+                if status == "approved" and outcome != ApprovalOutcome.APPROVED:
+                    continue
+                if status == "denied" and outcome != ApprovalOutcome.DENIED:
+                    continue
+
+            # Filter by org_id
+            if org_id:
+                agent_org = req.get("agent", {}).get("metadata", {}).get("org_id")
+                if agent_org != org_id:
+                    continue
+
+            results.append(req)
+
+        return results
+
+    async def count_pending(self) -> int:
+        """Count pending approval requests."""
+        return sum(
+            1
+            for req in self._requests.values()
+            if req.get("outcome") == ApprovalOutcome.DEFERRED
+        )
+
 
 class Approver(Protocol):
     """Async-first approver protocol."""

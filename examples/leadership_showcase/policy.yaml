@@ -1,0 +1,25 @@
+version: "1.0"
+rules:
+  - id: allow_reads
+    effect: read
+    decision: ALLOW
+    reason: "Read actions are allowed."
+
+  - id: ask_writes
+    effect: write
+    decision: ASK
+    reason: "Write actions require explicit approval."
+
+  - id: allow_notify
+    effect: notify
+    decision: ALLOW
+    reason: "Notifications are allowed when network policy also permits them."
+
+  - id: deny_delete
+    effect: delete
+    decision: DENY
+    reason: "Delete actions are blocked in this demo."
+
+  - id: deny_default
+    decision: DENY
+    reason: "No matching rule."
